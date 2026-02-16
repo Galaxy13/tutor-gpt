@@ -3,9 +3,31 @@ spring:
     name: tutor-chatgpt
   ai:
     openai:
-      api-key:
+      api-key: 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
+    chat:
       memory:
         repository:
           jdbc:
-            platform: auto-detected
             initialize-schema: never
+            platform: auto-detected
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/tutor
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migrations
+    enabled: true
+    user: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  shell:
+    interactive:
+      enabled: true
+    command:
+      script:
+        enabled: true
+
