@@ -3,7 +3,7 @@ spring:
     name: tutor-chatgpt
   ai:
     openai:
-      api-key: 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
+      api-key: ${OPENAPI_KEY}
     chat:
       memory:
         repository:
