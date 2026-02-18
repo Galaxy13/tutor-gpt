@@ -14,6 +14,6 @@ public class ChatShell {
 
     @Command(description = "Send chat to GPT")
     public String chat(@Argument(index = 0, description = "Your prompt") String prompt) {
-        return aiService.chat(prompt, "1234");
+        return aiService.chat(prompt, "cbefeec0-1f8b-4448-813f-41ee61da6c93");
     }
 }
