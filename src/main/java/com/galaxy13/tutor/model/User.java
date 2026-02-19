@@ -27,6 +27,17 @@ public class User {
     @Column(name = "surname", nullable = false, length = 100)
     private String surname;
 
+    @Column(name = "password_hash", nullable = false)
+    private String password_hash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private Role role;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Chat> chats;
+
+    public enum Role {
+        ADMIN, USER
+    }
 }
