@@ -1,11 +1,9 @@
 package com.galaxy13.tutor.repository;
 
-import com.galaxy13.tutor.model.Chat;
 import com.galaxy13.tutor.model.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Repository;
 
