@@ -37,10 +37,13 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
+    @Column(name = "email", length = 150)
+    private String email;
+
+    @Column(name = "telegram", length = 100)
+    private String telegram;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Chat> chats;
 
-    @OneToOne(orphanRemoval = true, cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
-    private Contact contact;
 }
