@@ -1,4 +1,4 @@
-package com.galaxy13.tutor.service;
+package com.galaxy13.tutor.service.info;
 
 import com.galaxy13.tutor.dto.ChatResponse;
 

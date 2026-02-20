@@ -31,3 +31,7 @@ spring:
       script:
         enabled: true
 
+jwt:
+  secret: test
+  expiration: 3600000
+  refresh-expiration: 3600000

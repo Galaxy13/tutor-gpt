@@ -1,12 +1,10 @@
-package com.galaxy13.tutor.service;
+package com.galaxy13.tutor.service.info;
 
 import com.galaxy13.tutor.converter.ChatResponseConverter;
-import com.galaxy13.tutor.dto.ChatCreateRequest;
 import com.galaxy13.tutor.dto.ChatResponse;
 import com.galaxy13.tutor.exception.ResourceNotFoundException;
 import com.galaxy13.tutor.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
