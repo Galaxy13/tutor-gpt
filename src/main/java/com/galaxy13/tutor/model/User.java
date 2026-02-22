@@ -27,6 +27,9 @@ public class User {
     @Column(name = "surname", nullable = false, length = 100)
     private String surname;
 
+    @Column(name = "username", nullable = false, length = 100)
+    private String username;
+
     @Column(name = "password_hash", nullable = false)
     private String password_hash;
 
@@ -34,10 +37,13 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
+    @Column(name = "email", length = 150)
+    private String email;
+
+    @Column(name = "telegram", length = 100)
+    private String telegram;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Chat> chats;
 
-    public enum Role {
-        ADMIN, USER
-    }
 }

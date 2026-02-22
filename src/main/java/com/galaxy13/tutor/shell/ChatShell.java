@@ -6,6 +6,8 @@ import org.springframework.shell.core.command.annotation.Argument;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class ChatShell {
@@ -13,7 +15,7 @@ public class ChatShell {
     private final AiService aiService;
 
     @Command(description = "Send chat to GPT")
-    public String chat(@Argument(index = 0, description = "Your prompt") String prompt) {
-        return aiService.chat(prompt, "cbefeec0-1f8b-4448-813f-41ee61da6c93");
+    public String chat(@Argument(index = 0, description = "Your prompt") String userMessage) {
+        return aiService.chat(UUID.fromString("cbefeec0-1f8b-4448-813f-41ee61da6c93"), userMessage);
     }
 }
