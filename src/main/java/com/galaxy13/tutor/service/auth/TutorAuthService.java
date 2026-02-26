@@ -57,7 +57,7 @@ public class TutorAuthService implements AuthService {
 
     @Override
     public AuthDto.AuthResponse register(AuthDto.RegisterRequest request) {
-        if (userRepository.existsByUsername(request.username)) {
+        if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Username already exists");
         }
         User user = new User();

@@ -46,6 +46,15 @@ public class TutorUserService implements UserService {
     public void changePassword(UUID id, UserDto.ChangePasswordRequest request) {
         User user = userRepository.getUserById(id).orElseThrow(() ->
                 new ResourceNotFoundException("User with id: " + id + " not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("New password must be different from current password");
+        }
+
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }

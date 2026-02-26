@@ -1,4 +1,4 @@
-package com.galaxy13.tutor.service;
+package com.galaxy13.tutor.client;
 
 import com.galaxy13.tutor.exception.ResourceNotFoundException;
 import com.galaxy13.tutor.model.Chat;
@@ -10,10 +10,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AiService {
+public class AiClient {
 
     private final ChatClient chatClient;
 
@@ -22,17 +23,27 @@ public class AiService {
     public String chat(UUID chatId, String userMessage) {
         Chat chat = chatRepository.findChatById(chatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat nor found with id:" + chatId));
-        String prompt = promptBeautify(chat.getPrompt().getContent());
+        String prompt = chat.getPrompt() != null ? promptBeautify(chat.getPrompt().getContent()) : "";
 
-        return chatClient.prompt()
-                .system(prompt)
+        var promptRequest = chatClient.prompt()
                 .user(userMessage)
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId.toString()))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId.toString()));
+        if (!prompt.isBlank()) {
+            promptRequest = promptRequest.system(prompt);
+        }
+
+        return promptRequest
                 .call()
                 .content();
     }
 
     private String promptBeautify(Map<String, Object> prompt) {
-        return "";
+        if (prompt == null || prompt.isEmpty()) {
+            return "";
+        }
+
+        return prompt.entrySet().stream()
+                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                .collect(Collectors.joining("\n"));
     }
 }

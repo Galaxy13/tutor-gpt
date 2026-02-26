@@ -36,11 +36,14 @@ public class TutorChatInfoService implements ChatInfoService {
     public ChatResponse getChatById(UUID id) {
         return chatRepository.findChatById(id)
                 .map(chatConverter::convert)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found chat with id" + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Chat not found with id: " + id));
     }
 
     @Override
     public void deleteChat(UUID id) {
+        if (!chatRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Chat not found with id: " + id);
+        }
         chatRepository.deleteById(id);
     }
 }
