@@ -1,6 +1,9 @@
 package com.galaxy13.tutor.repository;
 
+import com.galaxy13.tutor.model.Role;
 import com.galaxy13.tutor.model.User;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,4 +21,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
 
     Optional<User> findUserByUsername(String username);
+
+    boolean existsByUsernameAndIdNot(String username, UUID userId);
+
+    long countByRole(Role role);
 }
