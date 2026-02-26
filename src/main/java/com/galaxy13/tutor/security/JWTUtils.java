@@ -32,12 +32,20 @@ public class JWTUtils {
         return createToken(generateAccessClaim(), userDetails.getUsername(), properties.getExpiration());
     }
 
+    public String generateToken(String username) {
+        return createToken(generateAccessClaim(), username, properties.getExpiration());
+    }
+
     public String generateRefreshToken(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         if (userDetails == null) {
             throw new IllegalStateException("User details are null in authentication");
         }
         return createToken(generateRefreshClaim(), userDetails.getUsername(), properties.getRefreshExpiration());
+    }
+
+    public String generateRefreshToken(String username) {
+        return createToken(generateRefreshClaim(), username, properties.getRefreshExpiration());
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {

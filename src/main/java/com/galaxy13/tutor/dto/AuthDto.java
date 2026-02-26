@@ -31,9 +31,14 @@ public class AuthDto {
         @Size(min = 3, max = 50, message = "Username must be between 3 to 50 characters")
         public String username;
 
-        @NotBlank(message = "Email is required")
-        @Email(message = "Invalid email format")
-        private String email;
+        @NotBlank(message = "Name is required")
+        private String name;
+
+        @NotBlank(message = "Surname ir required")
+        @Size(min = 2, max = 50, message = "Surname must be between 2 to 50 characters")
+        private String surname;
+
+        private String contact;
 
         @NotBlank(message = "Password is required")
         @Size(min = 8, message = "Password must be at least 8 characters")

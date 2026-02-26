@@ -11,11 +11,5 @@ public interface AuthService {
 
     AuthDto.AuthResponse register(AuthDto.RegisterRequest request);
 
-    AuthDto.ApiTokenResponse refreshToken(AuthDto.RefreshTokenRequest request);
-
-    AuthDto.ApiTokenResponse createApiToken(UUID userId, AuthDto.ApiTokenRequest request);
-
-    List<AuthDto.ApiTokenResponse> getApiTokensByUser(UUID userId);
-
-    void removeApiToken(UUID userId, UUID tokenId);
+    AuthDto.AuthResponse refreshToken(AuthDto.RefreshTokenRequest request);
 }
