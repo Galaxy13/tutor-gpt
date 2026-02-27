@@ -48,6 +48,14 @@ public class JWTUtils {
         return createToken(generateRefreshClaim(), username, properties.getRefreshExpiration());
     }
 
+    public boolean isAccessToken(String token) {
+        return "access".equals(extractTokenType(token));
+    }
+
+    public boolean isRefreshToken(String token) {
+        return "refresh".equals(extractTokenType(token));
+    }
+
     public boolean validateToken(String token, UserDetails userDetails) {
         String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
