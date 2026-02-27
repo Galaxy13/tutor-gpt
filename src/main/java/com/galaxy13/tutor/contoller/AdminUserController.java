@@ -45,6 +45,13 @@ public class AdminUserController {
         return ResponseEntity.ok(user);
     }
 
+    @PostMapping
+    @Operation(summary = "Register a new user")
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody AdminDto.UserRegisterRequest request) {
+        UserDto user = adminService.registerUser(request);
+        return ResponseEntity.ok(user);
+    }
+
     @PatchMapping("/{id}")
     @Operation(summary = "Update user info")
     public ResponseEntity<UserDto> updateUser(

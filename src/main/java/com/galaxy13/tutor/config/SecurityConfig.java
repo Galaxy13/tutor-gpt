@@ -50,6 +50,11 @@ public class SecurityConfig {
                                         "/favicon.ico",
                                         "/assets/**"
                                         ).permitAll()
+                                .requestMatchers(
+                                        "/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html")
+                                .permitAll()
                                 .requestMatchers("/actuator/health").permitAll()
                                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
