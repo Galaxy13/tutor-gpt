@@ -1,6 +1,6 @@
 package com.galaxy13.tutor.service.admin;
 
-import com.galaxy13.tutor.dto.AdminDto;
+import com.galaxy13.tutor.dto.admin.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
 import com.galaxy13.tutor.exception.BadRequestException;
 import com.galaxy13.tutor.exception.ResourceNotFoundException;
@@ -92,10 +92,10 @@ public class TutorAdminService implements AdminService {
 
     @Override
     @Transactional
-    public void resetUserPassword(UUID id, String password) {
+    public void resetUserPassword(UUID id, AdminDto.ResetPasswordRequest request) {
         User user = userRepository.getUserById(id).orElseThrow(
                 () -> new ResourceNotFoundException("User with id: " + id + " not found"));
-        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
     }
 

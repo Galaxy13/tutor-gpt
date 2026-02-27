@@ -24,5 +24,5 @@ public class Prompt {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", nullable = false, columnDefinition = "jsonb")
-    private Map<String, Object> content;
+    private Map<String, String> content;
 }

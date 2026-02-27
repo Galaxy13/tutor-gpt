@@ -20,15 +20,15 @@ public class AiClient {
 
     private final ChatRepository chatRepository;
 
-    public String chat(UUID chatId, String userMessage) {
+    public String chat(UUID chatId, String userMessage, boolean isPromptIncluded) {
         Chat chat = chatRepository.findChatById(chatId)
-                .orElseThrow(() -> new ResourceNotFoundException("Chat nor found with id:" + chatId));
+                .orElseThrow(() -> new ResourceNotFoundException("Chat not found with id:" + chatId));
         String prompt = chat.getPrompt() != null ? promptBeautify(chat.getPrompt().getContent()) : "";
 
         var promptRequest = chatClient.prompt()
                 .user(userMessage)
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId.toString()));
-        if (!prompt.isBlank()) {
+        if (!prompt.isBlank() || isPromptIncluded) {
             promptRequest = promptRequest.system(prompt);
         }
 
@@ -37,7 +37,7 @@ public class AiClient {
                 .content();
     }
 
-    private String promptBeautify(Map<String, Object> prompt) {
+    private String promptBeautify(Map<String, String> prompt) {
         if (prompt == null || prompt.isEmpty()) {
             return "";
         }

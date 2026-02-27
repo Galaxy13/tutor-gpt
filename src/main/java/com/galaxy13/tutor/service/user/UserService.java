@@ -8,7 +8,7 @@ public interface UserService {
 
     UserDto getCurrentUser(UUID id);
 
-    UserDto updateUser(UserDto.UpdateUserRequest request);
+    UserDto updateUser(UUID id, UserDto.UpdateUserRequest request);
 
     void changePassword(UUID id, UserDto.ChangePasswordRequest request);
 }

@@ -1,10 +1,7 @@
 package com.galaxy13.tutor.dto;
 
 import com.galaxy13.tutor.model.ChatMessage;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -22,4 +19,13 @@ public class MessageDto {
     private UUID chatId;
 
     private LocalDateTime timestamp;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public static class MessageRequest {
+
+        private String message;
+    }
 }

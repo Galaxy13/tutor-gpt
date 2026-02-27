@@ -30,9 +30,6 @@ public class UserDto {
     @Setter
     public static class UpdateUserRequest {
 
-        @NotNull
-        private UUID id;
-
         private String contact;
     }
 

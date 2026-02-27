@@ -2,10 +2,14 @@ package com.galaxy13.tutor.service.chat;
 
 import com.galaxy13.tutor.client.AiClient;
 import com.galaxy13.tutor.dto.MessageDto;
+import com.galaxy13.tutor.exception.BadRequestException;
 import com.galaxy13.tutor.exception.ResourceNotFoundException;
+import com.galaxy13.tutor.model.Chat;
 import com.galaxy13.tutor.model.ChatMessage;
+import com.galaxy13.tutor.model.Role;
 import com.galaxy13.tutor.repository.ChatMessageJpaRepository;
 import com.galaxy13.tutor.repository.ChatRepository;
+import com.galaxy13.tutor.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Service;
@@ -29,16 +33,35 @@ public class TutorMessageService implements MessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MessageDto> getMessagesByChatId(UUID chatId) {
+    public List<MessageDto> getMessagesByChatId(UUID chatId, UserPrincipal principal) {
         ensureChatExists(chatId);
+        if (!principal.getRole().equals(Role.ADMIN)) {
+            Chat chat = chatRepository.findChatById(chatId).orElseThrow(() ->
+                    new ResourceNotFoundException("Chat with id:" + chatId + " not found"));
+            if (!chat.getUser().getId().equals(principal.getId())) {
+                throw new BadRequestException("User unallowed to read chat, that is not owned by him");
+            }
+        }
         return messageRepository.findByConversationIdOrderByTimestampAsc(chatId).stream()
                 .map(messageConverter::convert).toList();
     }
 
     @Override
-    public MessageDto sendMessage(UUID chatId, String message) {
+    public MessageDto sendMessage(UUID chatId, MessageDto.MessageRequest request, UUID userId) {
         ensureChatExists(chatId);
-        String response = aiClient.chat(chatId, message);
+        String response = aiClient.chat(chatId, request.getMessage(), true);
+        return MessageDto.builder()
+                .chatId(chatId)
+                .type(ChatMessage.MessageType.ASSISTANT)
+                .content(response)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @Override
+    public MessageDto sendMessageWithoutPrompt(UUID chatId, MessageDto.MessageRequest request, UUID userId) {
+        ensureChatExists(chatId);
+        String response = aiClient.chat(chatId, request.getMessage(), false);
         return MessageDto.builder()
                 .chatId(chatId)
                 .type(ChatMessage.MessageType.ASSISTANT)

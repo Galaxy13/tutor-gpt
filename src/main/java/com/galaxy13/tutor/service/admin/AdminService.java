@@ -1,6 +1,7 @@
 package com.galaxy13.tutor.service.admin;
 
-import com.galaxy13.tutor.dto.AdminDto;
+import com.galaxy13.tutor.dto.MessageDto;
+import com.galaxy13.tutor.dto.admin.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public interface AdminService {
 
     UserDto updateUser(UUID id, AdminDto.UserUpdateRequest request);
 
-    void resetUserPassword(UUID id, String password);
+    void resetUserPassword(UUID id, AdminDto.ResetPasswordRequest request);
 
     void deleteUser(UUID id);
 }

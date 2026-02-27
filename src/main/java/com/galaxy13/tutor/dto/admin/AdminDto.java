@@ -1,11 +1,8 @@
-package com.galaxy13.tutor.dto;
+package com.galaxy13.tutor.dto.admin;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 public class AdminDto {
 
@@ -64,4 +61,13 @@ public class AdminDto {
         private boolean isActive;
     }
 
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ResetPasswordRequest {
+
+        @Size(min = 8, message = "Password must be at least 8 characters")
+        private String password;
+    }
 }

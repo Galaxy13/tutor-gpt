@@ -34,9 +34,9 @@ public class TutorUserService implements UserService {
 
     @Override
     @Transactional
-    public UserDto updateUser(UserDto.UpdateUserRequest request) {
-        User user = userRepository.findById(request.getId()).orElseThrow(() ->
-                new  ResourceNotFoundException("User with id: " + request.getId() + " not found"));
+    public UserDto updateUser(UUID id, UserDto.UpdateUserRequest request) {
+        User user = userRepository.findById(id).orElseThrow(() ->
+                new  ResourceNotFoundException("User with id: " + id + " not found"));
         user.setContact(request.getContact());
         return converter.convert(userRepository.save(user));
     }

@@ -1,9 +1,14 @@
 package com.galaxy13.tutor.dto;
 
-import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class ChatCreateRequest {
-    private UUID userId;
-
-    private String startMessage;
+    private String message;
 }
