@@ -13,7 +13,7 @@ public class ChatResponseConverter implements Converter<Chat, ChatDto> {
                 .id(source.getId())
                 .name(source.getName())
                 .createdAt(source.getCreatedAt())
-                .promptVersion(source.getPrompt().getId())
+                .promptVersion(source.getPrompt() != null ? source.getPrompt().getId() : null)
                 .build();
     }
 }

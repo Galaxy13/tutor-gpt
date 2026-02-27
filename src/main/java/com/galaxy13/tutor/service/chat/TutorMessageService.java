@@ -34,22 +34,15 @@ public class TutorMessageService implements MessageService {
     @Override
     @Transactional(readOnly = true)
     public List<MessageDto> getMessagesByChatId(UUID chatId, UserPrincipal principal) {
-        ensureChatExists(chatId);
-        if (!principal.getRole().equals(Role.ADMIN)) {
-            Chat chat = chatRepository.findChatById(chatId).orElseThrow(() ->
-                    new ResourceNotFoundException("Chat with id:" + chatId + " not found"));
-            if (!chat.getUser().getId().equals(principal.getId())) {
-                throw new BadRequestException("User unallowed to read chat, that is not owned by him");
-            }
-        }
-        return messageRepository.findByConversationIdOrderByTimestampAsc(chatId).stream()
+        Chat chat = getChatAndValidateAccess(chatId, principal);
+        return messageRepository.findByConversationIdOrderByTimestampAsc(chat.getId()).stream()
                 .map(messageConverter::convert).toList();
     }
 
     @Override
-    public MessageDto sendMessage(UUID chatId, MessageDto.MessageRequest request, UUID userId) {
-        ensureChatExists(chatId);
-        String response = aiClient.chat(chatId, request.getMessage(), true);
+    public MessageDto sendMessage(UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal) {
+        Chat chat = getChatAndValidateAccess(chatId, principal);
+        String response = aiClient.chat(chat.getId(), request.getMessage(), true);
         return MessageDto.builder()
                 .chatId(chatId)
                 .type(ChatMessage.MessageType.ASSISTANT)
@@ -59,9 +52,13 @@ public class TutorMessageService implements MessageService {
     }
 
     @Override
-    public MessageDto sendMessageWithoutPrompt(UUID chatId, MessageDto.MessageRequest request, UUID userId) {
-        ensureChatExists(chatId);
-        String response = aiClient.chat(chatId, request.getMessage(), false);
+    public MessageDto sendMessageWithoutPrompt(UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal) {
+        if (!principal.getRole().equals(Role.ADMIN)) {
+            throw new BadRequestException("Only admin can send messages without prompt");
+        }
+
+        Chat chat = getChatAndValidateAccess(chatId, principal);
+        String response = aiClient.chat(chat.getId(), request.getMessage(), false);
         return MessageDto.builder()
                 .chatId(chatId)
                 .type(ChatMessage.MessageType.ASSISTANT)
@@ -70,9 +67,13 @@ public class TutorMessageService implements MessageService {
                 .build();
     }
 
-    private void ensureChatExists(UUID chatId) {
-        if (!chatRepository.existsById(chatId)) {
-            throw new ResourceNotFoundException("Chat not found with id: " + chatId);
+    private Chat getChatAndValidateAccess(UUID chatId, UserPrincipal principal) {
+        Chat chat = chatRepository.findChatById(chatId).orElseThrow(() ->
+                new ResourceNotFoundException("Chat with id:" + chatId + " not found"));
+
+        if (!principal.getRole().equals(Role.ADMIN) && !chat.getUser().getId().equals(principal.getId())) {
+            throw new BadRequestException("User is not allowed to access this chat");
         }
+        return chat;
     }
 }

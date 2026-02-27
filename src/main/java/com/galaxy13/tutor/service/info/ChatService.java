@@ -13,7 +13,7 @@ public interface ChatService {
 
     ChatDto getChatById(UUID id);
 
-    ChatDto createChat(UUID userId, ChatCreateRequest request);
+    ChatDto createChat(UUID userId, ChatCreateRequest request, boolean withPrompt);
 
     void deleteChat(UUID id);
 }

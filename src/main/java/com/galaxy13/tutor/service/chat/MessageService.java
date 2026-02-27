@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface MessageService {
     List<MessageDto> getMessagesByChatId(UUID chatId, UserPrincipal principal);
 
-    MessageDto sendMessage(UUID chatId, MessageDto.MessageRequest request, UUID userId);
+    MessageDto sendMessage(UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal);
 
-    MessageDto sendMessageWithoutPrompt(UUID chatId, MessageDto.MessageRequest request, UUID userId);
+    MessageDto sendMessageWithoutPrompt(UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal);
 }

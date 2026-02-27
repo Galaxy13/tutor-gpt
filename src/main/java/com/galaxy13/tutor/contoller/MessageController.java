@@ -26,7 +26,7 @@ public class MessageController {
     public ResponseEntity<MessageDto> sendMessage(@AuthenticationPrincipal UserPrincipal principal,
                                                   @PathVariable(name = "chat_id") UUID id,
                                                   @Valid @RequestBody MessageDto.MessageRequest request) {
-        MessageDto agentResponse = messageService.sendMessage(id, request, principal.getId());
+        MessageDto agentResponse = messageService.sendMessage(id, request, principal);
         return ResponseEntity.ok(agentResponse);
     }
 }

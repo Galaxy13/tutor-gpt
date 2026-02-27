@@ -53,7 +53,7 @@ public class AdminChatController {
     public ResponseEntity<MessageDto> sendMessageWithoutPrompt(@AuthenticationPrincipal UserPrincipal principal,
                                                                @PathVariable(name = "chat_id") UUID chatId,
                                                                @Valid @RequestBody MessageDto.MessageRequest request) {
-        MessageDto message = messageService.sendMessageWithoutPrompt(chatId, request, principal.getId());
+        MessageDto message = messageService.sendMessageWithoutPrompt(chatId, request, principal);
         return ResponseEntity.ok(message);
     }
 

@@ -50,17 +50,20 @@ public class TutorChatService implements ChatService {
     }
 
     @Override
-    public ChatDto createChat(UUID userId, ChatCreateRequest request) {
+    public ChatDto createChat(UUID userId, ChatCreateRequest request, boolean withPrompt) {
         User user = userRepository.getUserById(userId).orElseThrow(() ->
                 new ResourceNotFoundException("User with id: " + userId + " not found"));
 
         Chat chat = new Chat();
         chat.setUser(user);
 
-        Prompt prompt = promptRepository.findTopByOrderByIdDesc().orElseThrow(() ->
-                new ResourceNotFoundException("No prompts available"));
-        chat.setPrompt(prompt);
-        chat.setName(request.getMessage().strip().substring(0, 20) + "...");
+        if (withPrompt) {
+            Prompt prompt = promptRepository.findTopByOrderByIdDesc().orElseThrow(() ->
+                    new ResourceNotFoundException("No prompts available"));
+            chat.setPrompt(prompt);
+        }
+
+        chat.setName(buildChatName(request));
         chat = chatRepository.save(chat);
         return chatConverter.convert(chat);
     }
@@ -71,5 +74,19 @@ public class TutorChatService implements ChatService {
             throw new ResourceNotFoundException("Chat not found with id: " + id);
         }
         chatRepository.deleteById(id);
+    }
+
+    private String buildChatName(ChatCreateRequest request) {
+        if (request.getName() != null && !request.getName().isBlank()) {
+            return request.getName().trim();
+        }
+
+        if (request.getMessage() != null && !request.getMessage().isBlank()) {
+            String source = request.getMessage().trim();
+            int limit = Math.min(source.length(), 20);
+            return source.substring(0, limit) + (source.length() > limit ? "..." : "");
+        }
+
+        return "New chat";
     }
 }
