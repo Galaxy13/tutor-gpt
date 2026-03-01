@@ -1,0 +1,101 @@
+* { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+body { margin: 0; background: #f4f6fb; color: #111827; }
+button, input, textarea { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; }
+button { cursor: pointer; background: #1d4ed8; color: white; }
+
+.app { min-height: 100vh; }
+.app > .auth-card { min-height: 100vh; display: grid; place-items: center; }
+
+.auth-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 360px;
+    display: grid;
+    gap: 10px;
+}
+
+.layout { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.content.two-col { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 60px); }
+
+aside {
+    padding: 10px;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: white;
+}
+
+section { display: flex; flex-direction: column; }
+
+.messages { flex: 1; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.bubble { max-width: 70%; padding: 10px 12px; border-radius: 12px; }
+.bubble.user { align-self: flex-end; background: #2563eb; color: white; }
+.bubble.assistant { align-self: flex-start; background: #fff; border: 1px solid #e5e7eb; }
+
+.compose { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px; border-top: 1px solid #e5e7eb; background: white; }
+textarea { min-height: 70px; resize: vertical; }
+.active { outline: 2px solid #60a5fa; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: grid; place-items: center; }
+.modal { background: white; padding: 16px; border-radius: 12px; width: 420px; display: grid; gap: 8px; }
+
+.row { display: flex; gap: 8px; }
+.error { color: #b91c1c; font-size: 13px; }
+
+.admin-grid { display: grid; grid-template-columns: 220px 1fr; height: calc(100vh - 60px); }
+
+nav { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-right: 1px solid #e5e7eb; background: white; }
+
+.card { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+
+/* small admin UX helper */
+.admin-chat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+}
+
+.modal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    width: min(560px, calc(100vw - 24px));
+    z-index: 1001;
+}
+
+.form {
+    display: grid;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.form label {
+    display: grid;
+    gap: 6px;
+}
+
+.row.actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}

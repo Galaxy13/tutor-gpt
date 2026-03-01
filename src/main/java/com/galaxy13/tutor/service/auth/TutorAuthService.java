@@ -41,7 +41,15 @@ public class TutorAuthService implements AuthService {
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+        if (principal == null) {
+            throw new BadRequestException("Invalid username or password");
+        }
+        User user =
+                userRepository
+                        .findById(principal.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         String accessToken = jwtUtils.generateToken(authentication);
         String refreshToken = jwtUtils.generateRefreshToken(authentication);

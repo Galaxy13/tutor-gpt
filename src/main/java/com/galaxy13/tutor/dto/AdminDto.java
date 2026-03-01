@@ -1,4 +1,4 @@
-package com.galaxy13.tutor.dto.admin;
+package com.galaxy13.tutor.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

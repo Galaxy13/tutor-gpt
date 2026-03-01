@@ -3,7 +3,8 @@ spring:
     name: tutor-chatgpt
   ai:
     openai:
-      api-key: ${OPENAPI_KEY}
+      api-key: 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
+    #      api-key: ${OPENAPI_KEY}
     chat:
       memory:
         repository:
@@ -26,12 +27,12 @@ spring:
     driver-class-name: org.postgresql.Driver
   shell:
     interactive:
-      enabled: true
+      enabled: false
     command:
       script:
-        enabled: true
+        enabled: false
 
 jwt:
-  secret: test
+  secret: N4aQn+nsjtQ05/O0ca5BkUOx6mebpTOc7AVUbVSLAW4=
   expiration: 3600000
   refresh-expiration: 3600000

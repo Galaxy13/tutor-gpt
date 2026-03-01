@@ -1,7 +1,6 @@
 package com.galaxy13.tutor.service.admin;
 
-import com.galaxy13.tutor.dto.MessageDto;
-import com.galaxy13.tutor.dto.admin.AdminDto;
+import com.galaxy13.tutor.dto.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
 
 import java.util.List;

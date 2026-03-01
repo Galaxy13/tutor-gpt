@@ -1,6 +1,6 @@
 package com.galaxy13.tutor.contoller;
 
-import com.galaxy13.tutor.dto.admin.AdminDto;
+import com.galaxy13.tutor.dto.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
 import com.galaxy13.tutor.service.admin.AdminService;
 import com.galaxy13.tutor.service.user.UserService;

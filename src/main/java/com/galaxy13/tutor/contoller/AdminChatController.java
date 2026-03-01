@@ -1,5 +1,6 @@
 package com.galaxy13.tutor.contoller;
 
+import com.galaxy13.tutor.dto.ChatCreateRequest;
 import com.galaxy13.tutor.dto.ChatDto;
 import com.galaxy13.tutor.dto.MessageDto;
 import com.galaxy13.tutor.security.UserPrincipal;
@@ -46,6 +47,14 @@ public class AdminChatController {
                                                                 @PathVariable(name = "chat_id") UUID chatId) {
         List<MessageDto> messages = messageService.getMessagesByChatId(chatId, principal);
         return ResponseEntity.ok(messages);
+    }
+
+    @PostMapping
+    @Operation(description = "Create chat without prompt")
+    public ResponseEntity<ChatDto> createChat(@AuthenticationPrincipal UserPrincipal principal,
+                                              @RequestBody @Valid ChatCreateRequest request) {
+        ChatDto chat = chatService.createChat(principal.getId(), request, true);
+        return ResponseEntity.ok(chat);
     }
 
     @PostMapping("/messages/{chat_id}")

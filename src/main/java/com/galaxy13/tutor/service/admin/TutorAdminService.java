@@ -1,6 +1,6 @@
 package com.galaxy13.tutor.service.admin;
 
-import com.galaxy13.tutor.dto.admin.AdminDto;
+import com.galaxy13.tutor.dto.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
 import com.galaxy13.tutor.exception.BadRequestException;
 import com.galaxy13.tutor.exception.ResourceNotFoundException;
