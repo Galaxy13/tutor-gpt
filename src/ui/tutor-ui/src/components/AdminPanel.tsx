@@ -1,6 +1,10 @@
-import {Accessor, For, Show} from "solid-js";
-import {AdminTab, Chat, Message, Prompt, User, UserForm} from "../types";
-import CreateUserModal from "./CreateUserModal"
+import { Accessor, For, Show } from "solid-js";
+import { marked } from "marked";
+import type { AdminTab, Chat, Message, Prompt, User, UserForm } from "../types";
+import CreateUserModal from "./CreateUserModal";
+import EditUserModal from "./EditUserModal";
+
+const md = (text: string) => marked.parse(text, { async: false }) as string;
 
 export default function AdminPanel(props: {
     adminTab: Accessor<AdminTab>;
@@ -12,71 +16,136 @@ export default function AdminPanel(props: {
     adminMessages: Accessor<Message[]>;
 
     prompts: Accessor<Prompt[]>;
-    promptParts: Accessor<Array<{key: string, value: string}>>;
-    setPromptParts: (fn: (prev: Array<{key: string, value: string}>) => Array<{key: string, value: string}>) => void;
-
-    testChatId: Accessor<string>;
-    setTestChatId: (v: string) => void;
-    testDraft: Accessor<string>;
-    setTestDraft(v: string): void;
+    promptParts: Accessor<Array<{ key: string; value: string }>>;
+    setPromptParts: (fn: (prev: Array<{ key: string; value: string }>) => Array<{ key: string; value: string }>) => void;
 
     onCreateUser: () => void;
     onDeleteUser: (id: string) => void;
+    onUpdateUser: (user: User) => void;
 
     onOpenAdminChat: (chatId: string) => void;
-
     onCreatePrompt: () => void;
-
-    onCreateAdminNoPromptChat: () => void;
-    onSendPromptTestMessage: () => void;
+    onCreateChat: () => void;
+    onCreatePromptlessChat: () => void;
 
     adminDraft: Accessor<string>;
     setAdminDraft: (v: string) => void;
-    onSendAdminPromptless: () => void;
+    onSendAdminMessage: () => void;
 
     showCreateUserModal: Accessor<boolean>;
     setShowCreateUserModal: (v: boolean) => void;
-
     newUserDraft: Accessor<UserForm>;
     setNewUserDraft: (fn: (prev: UserForm) => UserForm) => void;
     onSubmitCreate: () => void;
+
+    showEditUserModal: Accessor<boolean>;
+    editUserDraft: Accessor<UserForm>;
+    setEditUserDraft: (fn: (prev: UserForm) => UserForm) => void;
+    onCloseEditModal: () => void;
+    onSubmitEdit: () => void;
+
+    onOpenUserChats: (user: User) => void;
+    viewingUser: Accessor<User | null>;
+    userChats: Accessor<Chat[]>;
+    selectedUserChatId: Accessor<string>;
+    userChatMessages: Accessor<Message[]>;
+    onOpenUserChat: (chatId: string) => void;
 }) {
+    const handleChatKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            props.onSendAdminMessage();
+        }
+    };
+
     return (
-        <div class="content admin-grid">
-            <nav>
+        <div class="admin-layout">
+            <nav class="admin-nav">
+                <div class="nav-label">Навигация</div>
+
                 <button
-                    classList={{ active: props.adminTab() === "users" }}
+                    class={`nav-tab ${props.adminTab() === "users" ? "active" : ""}`}
                     onClick={() => props.setAdminTab("users")}
                 >
                     Пользователи
                 </button>
 
                 <button
-                    classList={{ active: props.adminTab() === "chats" }}
+                    class={`nav-tab ${props.adminTab() === "chats" ? "active" : ""}`}
                     onClick={() => props.setAdminTab("chats")}
                 >
                     Чаты
                 </button>
 
                 <button
-                    classList={{ active: props.adminTab() === "prompts" }}
+                    class={`nav-tab ${props.adminTab() === "prompts" ? "active" : ""}`}
                     onClick={() => props.setAdminTab("prompts")}
                 >
-                    Управление Промптом
+                    Промпты
                 </button>
 
-                <button
-                    classList={{ active: props.adminTab() === "test" }}
-                    onClick={() => props.setAdminTab("test")}
-                >
-                    Тест
+                <div class="nav-divider" />
+                <div class="nav-label">Действия</div>
+
+                <button class="nav-action" onClick={props.onCreateChat}>
+                    + Создать чат
+                </button>
+
+                <button class="nav-action" onClick={props.onCreatePromptlessChat}>
+                    + Чат без промпта
                 </button>
             </nav>
 
-            <section>
-                <Show when={props.adminTab() === 'users'}>
-                    <h2>Пользователи</h2>
-                    <button onClick={props.onCreateUser}>Создать пользователя</button>
+            <div class="admin-content">
+                {/* ===== USERS TAB ===== */}
+                <Show when={props.adminTab() === "users"}>
+                    <div class="admin-content-padded">
+                        <div class="section-header">
+                            <h2>Пользователи</h2>
+                            <button onClick={props.onCreateUser}>+ Создать пользователя</button>
+                        </div>
+
+                        <div class="users-grid">
+                            <For each={props.users()} fallback={
+                                <div class="empty-state"><p>Нет пользователей</p></div>
+                            }>
+                                {(u) => (
+                                    <div class="user-card">
+                                        <div class="user-details">
+                                            <h3>{u.name} {u.surname}</h3>
+                                            <div class="user-meta">
+                                                <span class={`badge ${u.role === "ADMIN" ? "badge-admin" : "badge-user"}`}>
+                                                    {u.role}
+                                                </span>
+                                                <Show when={u.isActive !== undefined}>
+                                                    <span class={`badge ${u.isActive ? "badge-active" : "badge-inactive"}`}>
+                                                        {u.isActive ? "Активен" : "Неактивен"}
+                                                    </span>
+                                                </Show>
+                                                <Show when={u.username}>
+                                                    <span>@{u.username}</span>
+                                                </Show>
+                                                <Show when={u.contact}>
+                                                    <span>{u.contact}</span>
+                                                </Show>
+                                            </div>
+                                        </div>
+                                        <div class="user-actions">
+                                            <button class="btn-outline btn-sm" onClick={() => props.onOpenUserChats(u)}>
+                                                Чаты
+                                            </button>
+                                            <button class="btn-secondary btn-sm" onClick={() => props.onUpdateUser(u)}>
+                                                Изменить
+                                            </button>
+                                            <button class="btn-danger btn-sm" onClick={() => props.onDeleteUser(u.id)}>
+                                                Удалить
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </For>
+                        </div>
+                    </div>
 
                     <CreateUserModal
                         open={props.showCreateUserModal()}
@@ -84,128 +153,195 @@ export default function AdminPanel(props: {
                         setDraft={props.setNewUserDraft}
                         onClose={() => props.setShowCreateUserModal(false)}
                         onSubmit={props.onSubmitCreate}
-                        />
-
-                    <For each={props.users()}>
-                        {(u) => (
-                            <div class="card">
-                                <div>
-                                    {u.name} {u.surname} ({u.role})
-                                </div>
-                                <div>{u.contact}</div>
-                                <div class="row">
-                                    <button onClick={() => props.onDeleteUser(u.id)}>Delete</button>
-                                </div>
-                            </div>
-                        )}
-                    </For>
+                    />
+                    <EditUserModal
+                        open={props.showEditUserModal}
+                        draft={props.editUserDraft}
+                        setDraft={props.setEditUserDraft}
+                        onClose={props.onCloseEditModal}
+                        onSubmit={props.onSubmitEdit}
+                    />
                 </Show>
 
+                {/* ===== CHATS TAB ===== */}
                 <Show when={props.adminTab() === "chats"}>
-                    <h2>Чаты</h2>
+                    <div class="chat-layout" style="height: calc(100vh - 57px)">
+                        <aside class="chat-sidebar">
+                            <div class="sidebar-header">
+                                <h3>Все чаты</h3>
+                            </div>
 
-                    <div class="two-col">
-                        <aside class="admin-chat-list">
-                            <button onClick={props.onCreateAdminNoPromptChat}>
-                                + New promptless chat
-                            </button>
-
-                            <For each={props.allChats()}>
+                            <For each={props.allChats()} fallback={
+                                <div class="empty-state"><p>Нет чатов</p></div>
+                            }>
                                 {(c) => (
                                     <button
+                                        class={`sidebar-btn ${props.selectedAdminChatId() === c.id ? "active" : ""}`}
                                         onClick={() => props.onOpenAdminChat(c.id)}
-                                        class={props.selectedAdminChatId() === c.id ? "active" : ""}
                                     >
-                                        {c.name} · prompt v{c.promptVersion ?? "none"}
+                                        <strong>{c.name || "Без названия"}</strong>
+                                        <small>
+                                            {c.promptVersion ? `v${c.promptVersion}` : "без промпта"}
+                                            {" · "}
+                                            {new Date(c.createdAt).toLocaleDateString()}
+                                        </small>
                                     </button>
                                 )}
                             </For>
                         </aside>
 
-                        <section>
-                            <div class="messages">
-                                <For each={props.adminMessages()}>
-                                    {(msg) => (
-                                        <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
-                                            {msg.content}
-                                        </div>
-                                    )}
-                                </For>
-                            </div>
+                        <div class="chat-main">
+                            <Show when={props.selectedAdminChatId()} fallback={
+                                <div class="empty-state" style="flex:1">
+                                    <p>Выберите чат из списка слева</p>
+                                </div>
+                            }>
+                                <div class="messages">
+                                    <For each={props.adminMessages()}>
+                                        {(msg) => (
+                                            <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
+                                                <Show when={msg.type === "ASSISTANT"} fallback={<span>{msg.content}</span>}>
+                                                    <div innerHTML={md(msg.content)} />
+                                                </Show>
+                                            </div>
+                                        )}
+                                    </For>
+                                </div>
 
-                            <div class="compose">
-                                <textarea
-                                    value={props.adminDraft()}
-                                    onInput={(e) => props.setAdminDraft(e.currentTarget.value)}
-                                    placeholder="Напишите сообщение..."
-                                />
-                                <button onClick={props.onSendAdminPromptless}>
-                                    Отправить
-                                </button>
-                            </div>
-                        </section>
+                                <div class="compose">
+                                    <textarea
+                                        value={props.adminDraft()}
+                                        onInput={(e) => props.setAdminDraft(e.currentTarget.value)}
+                                        onKeyDown={handleChatKeyDown}
+                                        placeholder="Напишите сообщение..."
+                                    />
+                                    <button onClick={props.onSendAdminMessage}>Отправить</button>
+                                </div>
+                            </Show>
+                        </div>
                     </div>
                 </Show>
 
-                <Show when={props.adminTab() === 'prompts'}>
-                    <h2>Промпты</h2>
-                    <For each={props.prompts()}>
-                        {(p) => (
-                            <div class="card">
-                                <strong>Версия {p.version}</strong>
-                                <For each={Object.entries(p.content)}>
-                                    {([key, value]) => (
-                                        <div>
-                                            <b>{key}:</b> {value}
-                                        </div>
-                                    )}
-                                </For>
-                            </div>
-                        )}
-                    </For>
+                {/* ===== PROMPTS TAB ===== */}
+                <Show when={props.adminTab() === "prompts"}>
+                    <div class="admin-content-padded">
+                        <div class="section-header">
+                            <h2>Промпты</h2>
+                        </div>
 
-                    <h3>Создать новый промпт</h3>
+                        <For each={props.prompts()} fallback={
+                            <div class="empty-state"><p>Нет промптов</p></div>
+                        }>
+                            {(p) => (
+                                <div class="prompt-card">
+                                    <strong>Версия {p.version}</strong>
+                                    <For each={Object.entries(p.content)}>
+                                        {([key, value]) => (
+                                            <div class="prompt-entry">
+                                                <b>{key}:</b> {value}
+                                            </div>
+                                        )}
+                                    </For>
+                                </div>
+                            )}
+                        </For>
 
-                    <For each={props.promptParts()}>
-                        {(part, idx) => (
-                            <div class="row">
-                                <input
-                                    placeholder="Название секции"
-                                    value={part.key}
-                                    onInput={(e) => props.setPromptParts((prev) =>
-                                    prev.map((p, i) => (i === idx() ? {...p, key: e.currentTarget.value} : p)))}
-                                />
-                                <input
-                                    placeholder="Промпт секци"
-                                    value={part.value}
-                                    onInput={(e) =>
-                                        props.setPromptParts((prev) =>
-                                            prev.map((p, i) => (i === idx() ? { ...p, value: e.currentTarget.value } : p)),
-                                        )
-                                    }
-                                />
-                                <button onClick={() => props.setPromptParts((prev) => prev.filter((_, i) => i !== idx()))}>
-                                    x
+                        <div class="prompt-form">
+                            <h3>Создать новый промпт</h3>
+
+                            <For each={props.promptParts()}>
+                                {(part, idx) => (
+                                    <div class="prompt-row">
+                                        <input
+                                            placeholder="Название секции"
+                                            value={part.key}
+                                            onInput={(e) => props.setPromptParts((prev) =>
+                                                prev.map((p, i) => (i === idx() ? { ...p, key: e.currentTarget.value } : p))
+                                            )}
+                                        />
+                                        <input
+                                            placeholder="Содержание секции"
+                                            value={part.value}
+                                            onInput={(e) => props.setPromptParts((prev) =>
+                                                prev.map((p, i) => (i === idx() ? { ...p, value: e.currentTarget.value } : p))
+                                            )}
+                                        />
+                                        <button
+                                            class="btn-ghost btn-sm"
+                                            onClick={() => props.setPromptParts((prev) => prev.filter((_, i) => i !== idx()))}
+                                        >
+                                            x
+                                        </button>
+                                    </div>
+                                )}
+                            </For>
+
+                            <div class="prompt-form-actions">
+                                <button class="btn-secondary" onClick={() => props.setPromptParts((prev) => [...prev, { key: "", value: "" }])}>
+                                    + Новая часть
                                 </button>
+                                <button onClick={props.onCreatePrompt}>Сохранить промпт</button>
                             </div>
+                        </div>
+                    </div>
+                </Show>
+
+                {/* ===== USER CHATS VIEW ===== */}
+                <Show when={props.adminTab() === "user_chats"}>
+                    <Show when={props.viewingUser()}>
+                        {(user) => (
+                            <>
+                                <div class="admin-content-padded" style="padding-bottom: 0">
+                                    <div class="back-row">
+                                        <button class="btn-ghost btn-sm" onClick={() => props.setAdminTab("users")}>
+                                            &larr; Назад
+                                        </button>
+                                        <h2>Чаты: {user().name} {user().surname}</h2>
+                                    </div>
+                                </div>
+
+                                <div class="chat-layout" style="height: calc(100vh - 57px - 68px)">
+                                    <aside class="chat-sidebar">
+                                        <For each={props.userChats()} fallback={
+                                            <div class="empty-state"><p>Нет чатов</p></div>
+                                        }>
+                                            {(c) => (
+                                                <button
+                                                    class={`sidebar-btn ${props.selectedUserChatId() === c.id ? "active" : ""}`}
+                                                    onClick={() => props.onOpenUserChat(c.id)}
+                                                >
+                                                    <strong>{c.name || "Без названия"}</strong>
+                                                    <small>{new Date(c.createdAt).toLocaleDateString()}</small>
+                                                </button>
+                                            )}
+                                        </For>
+                                    </aside>
+
+                                    <div class="chat-main">
+                                        <Show when={props.selectedUserChatId()} fallback={
+                                            <div class="empty-state" style="flex:1">
+                                                <p>Выберите чат для просмотра</p>
+                                            </div>
+                                        }>
+                                            <div class="messages">
+                                                <For each={props.userChatMessages()}>
+                                                    {(msg) => (
+                                                        <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
+                                                            <Show when={msg.type === "ASSISTANT"} fallback={<span>{msg.content}</span>}>
+                                                                <div innerHTML={md(msg.content)} />
+                                                            </Show>
+                                                        </div>
+                                                    )}
+                                                </For>
+                                            </div>
+                                        </Show>
+                                    </div>
+                                </div>
+                            </>
                         )}
-                    </For>
-
-                    <button onClick={() => props.setPromptParts((prev) => [...prev, {key: '', value: ''}])}>
-                        + Новая часть
-                    </button>
-                    <button onClick={props.onCreatePrompt}>Сохранить промпт</button>
+                    </Show>
                 </Show>
-
-                <Show when={props.adminTab() === 'test'}>
-                    <h2>Prompt test chat</h2>
-                    <button onClick={props.onCreateAdminNoPromptChat}>Create my admin no-prompt chat</button>
-
-                    <input placeholder="chat id" value={props.testChatId()} onInput={(e) => props.setTestChatId(e.currentTarget.value)} />
-                    <textarea placeholder="message" value={props.testDraft()} onInput={(e) => props.setTestDraft(e.currentTarget.value)} />
-                    <button onClick={props.onSendPromptTestMessage}>Send to test chat</button>
-                </Show>
-            </section>
+            </div>
         </div>
-    )
+    );
 }

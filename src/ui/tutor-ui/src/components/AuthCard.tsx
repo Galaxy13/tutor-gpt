@@ -6,25 +6,35 @@ export default function AuthCard(props: {
     error: Accessor<string>,
     onLogin: () => void,
 }) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Enter") props.onLogin();
+    };
+
     return (
-        <div class="auth-card">
-            <h1>Tutor GPT</h1>
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <h1>Tutor GPT</h1>
+                <p class="subtitle">Войдите в систему</p>
 
-            <input
-                placeholder="Username"
-                value={props.login().username}
-                onInput={(e) => props.setLogin((p) => ({ ...p, username: e.currentTarget.value }))}
-            />
+                <input
+                    placeholder="Имя пользователя"
+                    value={props.login().username}
+                    onInput={(e) => props.setLogin((p) => ({ ...p, username: e.currentTarget.value }))}
+                    onKeyDown={handleKeyDown}
+                />
 
-            <input
-                placeholder="Password"
-                value={props.login().password}
-                onInput={(e) => props.setLogin((p) => ({ ...p, password: e.currentTarget.value }))}
-            />
+                <input
+                    type="password"
+                    placeholder="Пароль"
+                    value={props.login().password}
+                    onInput={(e) => props.setLogin((p) => ({ ...p, password: e.currentTarget.value }))}
+                    onKeyDown={handleKeyDown}
+                />
 
-            <button onClick={props.onLogin}>Login</button>
+                <button onClick={props.onLogin}>Войти</button>
 
-            {props.error() && <p class="error">{props.error()}</p> }
+                {props.error() && <p class="error">{props.error()}</p>}
+            </div>
         </div>
     );
 }

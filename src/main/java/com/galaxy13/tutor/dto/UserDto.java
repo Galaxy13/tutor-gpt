@@ -16,6 +16,8 @@ public class UserDto {
 
     private UUID id;
 
+    private String username;
+
     private String name;
 
     private String surname;
@@ -23,6 +25,8 @@ public class UserDto {
     private String contact;
 
     private String role;
+
+    private Boolean isActive;
 
     @AllArgsConstructor
     @NoArgsConstructor
