@@ -32,15 +32,17 @@ public class MessageController {
         return ResponseEntity.ok(agentResponse);
     }
 
-    @PostMapping(value = "/image/{chat_id}",
+    @PostMapping(
+            value = "/image/{chat_id}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE)
-    @Operation(description = "Send message with image to specific chat")
-    public ResponseEntity<MessageDto> sendMessageWithImage(@AuthenticationPrincipal UserPrincipal principal,
-                                                           @PathVariable(name = "chat_id") UUID id,
-                                                           @RequestPart("image") MultipartFile image,
-                                                           @Valid @RequestBody MessageDto.MessageRequest request,
-                                                           @RequestParam(defaultValue = "true") boolean withPrompt) {
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<MessageDto> sendMessageWithImage(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable("chat_id") UUID id,
+            @RequestPart("image") MultipartFile image,
+            @Valid @RequestPart("request") MessageDto.MessageRequest request,
+            @RequestParam(defaultValue = "true") boolean withPrompt) {
         MessageDto agentResponse = messageService.sendMessageWithImage(id, request, principal, withPrompt, image);
         return ResponseEntity.ok(agentResponse);
     }
