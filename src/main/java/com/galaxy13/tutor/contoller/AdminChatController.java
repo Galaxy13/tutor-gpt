@@ -50,10 +50,11 @@ public class AdminChatController {
     }
 
     @PostMapping
-    @Operation(description = "Create chat without prompt")
+    @Operation(description = "Create chat")
     public ResponseEntity<ChatDto> createChat(@AuthenticationPrincipal UserPrincipal principal,
-                                              @RequestBody @Valid ChatCreateRequest request) {
-        ChatDto chat = chatService.createChat(principal.getId(), request, true);
+                                              @RequestBody @Valid ChatCreateRequest request,
+                                              @RequestParam(defaultValue = "true") boolean withPrompt) {
+        ChatDto chat = chatService.createChat(principal.getId(), request, withPrompt);
         return ResponseEntity.ok(chat);
     }
 

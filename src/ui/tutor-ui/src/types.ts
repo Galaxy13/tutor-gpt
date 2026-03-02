@@ -2,10 +2,12 @@ export type Role = 'USER' | 'ADMIN';
 
 export type User = {
     id: string;
+    username?: string;
     name: string;
     surname: string;
     contact?: string;
     role: Role;
+    isActive?: boolean;
 };
 
 export type AuthResponse = {
@@ -54,4 +56,4 @@ export type UserForm = {
     isActive: boolean;
 };
 
-export type AdminTab = 'users' | 'chats' | 'prompts' | 'admin_chat' | 'promptless_chat'
+export type AdminTab = 'users' | 'chats' | 'prompts' | 'user_chats';

@@ -1,7 +1,7 @@
 import { Show, createMemo, createSignal } from 'solid-js';
 import './styles.css';
 
-import type {AdminTab, AnyChat, AuthResponse, Chat, Message, Prompt, TempChat, User} from './types';
+import type { AdminTab, AnyChat, AuthResponse, Chat, Message, Prompt, TempChat, User } from './types';
 import type { UserForm } from './types';
 
 import { AdminApi, AuthApi, ChatApi, UserApi } from './api';
@@ -22,9 +22,6 @@ export default function App() {
     const [messages, setMessages] = createSignal<Message[]>([]);
     const [draft, setDraft] = createSignal('');
 
-    const [adminActiveChat, setAdminActiveChat] = createSignal<AnyChat | null>(null);
-    const [adminDraft, setAdminDraft] = createSignal("");
-
     const [showProfile, setShowProfile] = createSignal(false);
     const [profileContact, setProfileContact] = createSignal('');
     const [passwords, setPasswords] = createSignal({ currentPassword: '', newPassword: '' });
@@ -34,6 +31,7 @@ export default function App() {
     const [allChats, setAllChats] = createSignal<Chat[]>([]);
     const [selectedAdminChatId, setSelectedAdminChatId] = createSignal('');
     const [adminMessages, setAdminMessages] = createSignal<Message[]>([]);
+    const [adminDraft, setAdminDraft] = createSignal('');
     const [prompts, setPrompts] = createSignal<Prompt[]>([]);
     const [promptParts, setPromptParts] = createSignal<Array<{ key: string; value: string }>>([
         { key: 'role', value: '' },
@@ -47,16 +45,24 @@ export default function App() {
         contact: "",
         password: "",
         isActive: true
-    })
+    });
 
     const [showCreateUserModal, setShowCreateUserModal] = createSignal(false);
     const [newUserDraft, setNewUserDraft] = createSignal<UserForm>(emptyUserForm());
 
-    const [testChatId, setTestChatId] = createSignal('');
-    const [testDraft, setTestDraft] = createSignal('');
+    const [showEditUserModal, setShowEditUserModal] = createSignal(false);
+    const [editUserId, setEditUserId] = createSignal('');
+    const [editUserDraft, setEditUserDraft] = createSignal<UserForm>(emptyUserForm());
+
+    const [viewingUser, setViewingUser] = createSignal<User | null>(null);
+    const [userChats, setUserChats] = createSignal<Chat[]>([]);
+    const [selectedUserChatId, setSelectedUserChatId] = createSignal('');
+    const [userChatMessages, setUserChatMessages] = createSignal<Message[]>([]);
 
     const token = createMemo(() => auth()?.token ?? '');
     const isAdmin = createMemo(() => auth()?.user.role === 'ADMIN');
+
+    // ---- AUTH ----
 
     const doLogin = async () => {
         setError('');
@@ -77,13 +83,16 @@ export default function App() {
         setChats([]);
         setMessages([]);
         setActiveChat(null);
-
         setUsers([]);
         setAllChats([]);
         setAdminMessages([]);
         setPrompts([]);
         setSelectedAdminChatId('');
         setAdminTab('users');
+        setViewingUser(null);
+        setUserChats([]);
+        setSelectedUserChatId('');
+        setUserChatMessages([]);
     };
 
     // ---- USER FLOW ----
@@ -97,7 +106,7 @@ export default function App() {
     };
 
     const createUserChat = async (autoselect = true, tk = token()) => {
-        const created = await ChatApi.createMine({message: "", name: ''}, tk);
+        const created = await ChatApi.createMine({ message: "", name: '' }, tk);
         setChats((prev) => [created, ...prev]);
 
         if (autoselect) {
@@ -110,6 +119,24 @@ export default function App() {
         setActiveChat(chat);
         const result = await ChatApi.messagesMine(chat.id, tk);
         setMessages(result);
+    };
+
+    const isTempChat = (c: AnyChat): c is TempChat => (c as any).__temp === true;
+
+    const makeTempChat = (name = "New chat"): TempChat => ({
+        id: `tmp-${crypto.randomUUID()}`,
+        name,
+        createdAt: new Date().toISOString(),
+        __temp: true,
+    });
+
+    const createUserChatLocal = (autoselect = true) => {
+        const temp = makeTempChat("Новый чат");
+        setChats((prev) => [temp as any, ...prev]);
+        if (autoselect) {
+            setActiveChat(temp as any);
+            setMessages([]);
+        }
     };
 
     const sendUserMessage = async () => {
@@ -131,9 +158,7 @@ export default function App() {
 
         if (isTempChat(chat as any)) {
             const created = await ChatApi.createMine({ message: text, name: "" }, token());
-
             setChats((prev) => prev.map((c: any) => (c.id === chat!.id ? created : c)));
-
             setActiveChat(created);
 
             const reply = await ChatApi.sendMessage(created.id, text, token());
@@ -141,7 +166,6 @@ export default function App() {
                 ...prev.map((m) => (m.chatId === chat!.id ? { ...m, chatId: created.id } : m)),
                 reply,
             ]);
-
             return;
         }
 
@@ -169,12 +193,12 @@ export default function App() {
         setPrompts(p);
     };
 
+    // -- Create User --
+
     const openCreateUserModal = () => {
         setNewUserDraft(emptyUserForm());
         setShowCreateUserModal(true);
     };
-
-    const closeCreateUserModal = () => setShowCreateUserModal(false);
 
     const submitCreateUser = async () => {
         await AdminApi.createUser(newUserDraft(), token());
@@ -182,11 +206,49 @@ export default function App() {
         await loadAdminData();
     };
 
+    // -- Edit User --
+
+    const openEditUserModal = (user: User) => {
+        setEditUserId(user.id);
+        setEditUserDraft({
+            username: user.username ?? '',
+            name: user.name,
+            surname: user.surname,
+            role: user.role,
+            contact: user.contact ?? '',
+            password: '',
+            isActive: user.isActive ?? true,
+        });
+        setShowEditUserModal(true);
+    };
+
+    const submitEditUser = async () => {
+        const d = editUserDraft();
+        await AdminApi.updateUser(editUserId(), {
+            username: d.username,
+            name: d.name,
+            surname: d.surname,
+            role: d.role,
+            contact: d.contact,
+            isActive: d.isActive,
+        }, token());
+
+        if (d.password.trim()) {
+            await AdminApi.resetPassword(editUserId(), d.password, token());
+        }
+
+        setShowEditUserModal(false);
+        await loadAdminData();
+    };
+
+    // -- Delete User --
 
     const deleteUser = async (id: string) => {
         await AdminApi.deleteUser(id, token());
         await loadAdminData();
     };
+
+    // -- Prompts --
 
     const createPrompt = async () => {
         const content = Object.fromEntries(
@@ -198,98 +260,63 @@ export default function App() {
         await loadAdminData();
     };
 
+    // -- Admin Chats --
+
     const openAdminChat = async (chatId: string) => {
         setSelectedAdminChatId(chatId);
         const result = await AdminApi.chatMessages(chatId, token());
         setAdminMessages(result);
     };
 
-    const createAdminNoPromptChat = async () => {
-        const created = await AdminApi.createChatWithoutPrompt({ name: 'Admin no-prompt chat', message: ''}, token());
+    const createAdminChat = async () => {
+        const created = await AdminApi.createChat({ name: 'Новый чат', message: '' }, token(), true);
         setAllChats((prev) => [created, ...prev]);
+        setAdminTab('chats');
+        setSelectedAdminChatId(created.id);
+        setAdminMessages([]);
     };
 
-    const sendPromptTestMessage = async () => {
-        const text = testDraft().trim();
-        if (!text || !testChatId()) return;
-
-        const reply = await AdminApi.sendChatWithoutPrompt(testChatId(), text, token());
-        setAdminMessages((prev) => [
-            ...prev,
-            { content: text, type: 'USER', chatId: testChatId(), timestamp: new Date().toISOString() },
-            reply,
-        ]);
-        setTestDraft('');
+    const createAdminPromptlessChat = async () => {
+        const created = await AdminApi.createChat({ name: 'Чат без промпта', message: '' }, token(), false);
+        setAllChats((prev) => [created, ...prev]);
+        setAdminTab('chats');
+        setSelectedAdminChatId(created.id);
+        setAdminMessages([]);
     };
 
-    const isTempChat = (c: AnyChat): c is TempChat => (c as any).__temp === true;
-
-    const makeTempChat = (name = "New chat"): TempChat => ({
-        id: `tmp-${crypto.randomUUID()}`,
-        name,
-        createdAt: new Date().toISOString(),
-        __temp: true,
-    });
-
-    const createUserChatLocal = (autoselect = true) => {
-        const temp = makeTempChat("New chat");
-        setChats((prev) => [temp as any, ...prev]);
-        if (autoselect) {
-            setActiveChat(temp as any);
-            setMessages([]);
-        }
-    };
-
-    const createAdminPromptlessChatLocal = (autoselect = true) => {
-        const temp = makeTempChat("Admin promptless chat");
-        setAllChats((prev) => [temp as any, ...prev]); // allChats: AnyChat[]
-        if (autoselect) {
-            setAdminActiveChat(temp as any);
-            setAdminMessages([]);
-        }
-    };
-
-    const sendAdminPromptlessMessage = async () => {
+    const sendAdminMessage = async () => {
         const text = adminDraft().trim();
-        if (!text) return;
+        if (!text || !selectedAdminChatId()) return;
 
-        let chat = adminActiveChat();
-        if (!chat) {
-            createAdminPromptlessChatLocal(true);
-            chat = adminActiveChat();
-            if (!chat) return;
-        }
-
-        // optimistic user/admin message
         setAdminMessages((prev) => [
             ...prev,
-            { content: text, type: "USER", chatId: chat!.id, timestamp: new Date().toISOString() },
+            { content: text, type: 'USER', chatId: selectedAdminChatId(), timestamp: new Date().toISOString() },
         ]);
-        setAdminDraft("");
+        setAdminDraft('');
 
-        // temp → create on server using first message
-        if (isTempChat(chat as any)) {
-            const created = await AdminApi.createChatWithoutPrompt(
-                { name: "Admin promptless chat", message: text },
-                token(),
-            );
-
-            setAllChats((prev) => prev.map((c: any) => (c.id === chat!.id ? created : c)));
-            setAdminActiveChat(created);
-
-            // if create endpoint does not return assistant reply, call send
-            const reply = await AdminApi.sendChatWithoutPrompt(created.id, text, token());
-
-            setAdminMessages((prev) => [
-                ...prev.map((m) => (m.chatId === chat!.id ? { ...m, chatId: created.id } : m)),
-                reply,
-            ]);
-            return;
-        }
-
-        // existing promptless chat
-        const reply = await AdminApi.sendChatWithoutPrompt((chat as any).id, text, token());
+        const reply = await AdminApi.sendMessage(selectedAdminChatId(), text, token());
         setAdminMessages((prev) => [...prev, reply]);
+    };
+
+    // -- View User Chats --
+
+    const openUserChats = async (user: User) => {
+        setViewingUser(user);
+        setSelectedUserChatId('');
+        setUserChatMessages([]);
+        setAdminTab('user_chats');
+        try {
+            const chats = await AdminApi.userChats(user.id, token());
+            setUserChats(chats);
+        } catch {
+            setUserChats([]);
+        }
+    };
+
+    const openUserChat = async (chatId: string) => {
+        setSelectedUserChatId(chatId);
+        const msgs = await AdminApi.chatMessages(chatId, token());
+        setUserChatMessages(msgs);
     };
 
     return (
@@ -310,31 +337,47 @@ export default function App() {
                                 <AdminPanel
                                     adminTab={adminTab}
                                     setAdminTab={setAdminTab}
-                                    adminDraft={adminDraft}
-                                    setAdminDraft={setAdminDraft}
-                                    onSendAdminPromptless={sendAdminPromptlessMessage}
+
                                     users={users}
                                     allChats={allChats}
                                     selectedAdminChatId={selectedAdminChatId}
                                     adminMessages={adminMessages}
+
                                     prompts={prompts}
                                     promptParts={promptParts}
                                     setPromptParts={setPromptParts}
-                                    testChatId={testChatId}
-                                    setTestChatId={setTestChatId}
-                                    testDraft={testDraft}
-                                    setTestDraft={setTestDraft}
+
                                     onCreateUser={openCreateUserModal}
                                     onDeleteUser={deleteUser}
+                                    onUpdateUser={openEditUserModal}
+
                                     onOpenAdminChat={openAdminChat}
                                     onCreatePrompt={createPrompt}
-                                    onCreateAdminNoPromptChat={createAdminNoPromptChat}
-                                    onSendPromptTestMessage={sendPromptTestMessage}
+                                    onCreateChat={createAdminChat}
+                                    onCreatePromptlessChat={createAdminPromptlessChat}
+
+                                    adminDraft={adminDraft}
+                                    setAdminDraft={setAdminDraft}
+                                    onSendAdminMessage={sendAdminMessage}
+
                                     showCreateUserModal={showCreateUserModal}
                                     setShowCreateUserModal={setShowCreateUserModal}
                                     newUserDraft={newUserDraft}
                                     setNewUserDraft={setNewUserDraft}
                                     onSubmitCreate={submitCreateUser}
+
+                                    showEditUserModal={showEditUserModal}
+                                    editUserDraft={editUserDraft}
+                                    setEditUserDraft={setEditUserDraft}
+                                    onCloseEditModal={() => setShowEditUserModal(false)}
+                                    onSubmitEdit={submitEditUser}
+
+                                    onOpenUserChats={openUserChats}
+                                    viewingUser={viewingUser}
+                                    userChats={userChats}
+                                    selectedUserChatId={selectedUserChatId}
+                                    userChatMessages={userChatMessages}
+                                    onOpenUserChat={openUserChat}
                                 />
                             }
                         >

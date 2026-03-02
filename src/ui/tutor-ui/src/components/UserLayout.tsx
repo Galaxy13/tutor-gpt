@@ -17,45 +17,56 @@ export default function UserLayout(props: {
     setDraft: (v: string) => void;
     onSend: () => void;
 }) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            props.onSend();
+        }
+    };
+
     return (
-      <div class="content two-col">
-          <aside>
-              <button onClick={props.onNewChat}>Новый чат</button>
+        <div class="chat-layout">
+            <aside class="chat-sidebar">
+                <div class="sidebar-header">
+                    <h3>Чаты</h3>
+                    <button class="btn-sm" onClick={props.onNewChat}>+ Новый</button>
+                </div>
 
-              <For each={props.chats()}>
-                  {(chat) => (
-                      <button
-                          class={props.activeChat()?.id === chat.id ? "active" : ""}
-                          onClick={() => props.onOpenChat(chat)}>
-                          <strong>{chat.name}</strong>
-                          <small>{new Date(chat.createdAt).toLocaleString()}</small>
-                      </button>
-                  )}
-              </For>
-          </aside>
+                <For each={props.chats()}>
+                    {(chat) => (
+                        <button
+                            class={`sidebar-btn ${props.activeChat()?.id === chat.id ? "active" : ""}`}
+                            onClick={() => props.onOpenChat(chat)}>
+                            <strong>{chat.name || "Новый чат"}</strong>
+                            <small>{new Date(chat.createdAt).toLocaleString()}</small>
+                        </button>
+                    )}
+                </For>
+            </aside>
 
-          <section>
-              <div class="messages">
-                  <For each={props.messages()}>
-                      {(msg) => (
-                          <div class={`bubble ${msg.type === 'USER' ? 'user': 'assistant'}`}>
-                              <Show when={msg.type === 'ASSISTANT'} fallback={<span>{msg.content}</span>}>
-                                  <div innerHTML={md(msg.content)}></div>
-                              </Show>
-                          </div>
-                      )}
-                  </For>
-              </div>
+            <div class="chat-main">
+                <div class="messages">
+                    <For each={props.messages()}>
+                        {(msg) => (
+                            <div class={`bubble ${msg.type === 'USER' ? 'user' : 'assistant'}`}>
+                                <Show when={msg.type === 'ASSISTANT'} fallback={<span>{msg.content}</span>}>
+                                    <div innerHTML={md(msg.content)}></div>
+                                </Show>
+                            </div>
+                        )}
+                    </For>
+                </div>
 
-              <div class="compose">
-                  <textarea
-                      value={props.draft()}
-                      onInput={(e) => props.setDraft(e.currentTarget.value)}
-                      placeholder="Напишите сообщение..."
-                  />
-                  <button onClick={props.onSend}>Отправить</button>
-              </div>
-          </section>
-      </div>
+                <div class="compose">
+                    <textarea
+                        value={props.draft()}
+                        onInput={(e) => props.setDraft(e.currentTarget.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Напишите сообщение..."
+                    />
+                    <button onClick={props.onSend}>Отправить</button>
+                </div>
+            </div>
+        </div>
     )
 }

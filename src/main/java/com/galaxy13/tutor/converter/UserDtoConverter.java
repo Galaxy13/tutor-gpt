@@ -10,8 +10,13 @@ public class UserDtoConverter implements Converter<User, UserDto> {
     @Override
     public UserDto convert(User source) {
         return UserDto.builder()
+                .id(source.getId())
+                .username(source.getUsername())
                 .name(source.getName())
                 .surname(source.getSurname())
-                .role(source.getRole().name()).build();
+                .contact(source.getContact())
+                .role(source.getRole().name())
+                .isActive(source.getIsActive())
+                .build();
     }
 }

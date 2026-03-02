@@ -1,18 +1,19 @@
 import { Show } from "solid-js";
+import type { Accessor } from "solid-js";
 import type { UserForm } from "../types";
 
-export default function CreateUserModal(props: {
-    open: boolean,
-    draft: () => UserForm,
-    setDraft: (fn: (prev: UserForm) => UserForm) => void,
-    onClose: () => void,
-    onSubmit: () => void,
+export default function EditUserModal(props: {
+    open: Accessor<boolean>;
+    draft: Accessor<UserForm>;
+    setDraft: (fn: (prev: UserForm) => UserForm) => void;
+    onClose: () => void;
+    onSubmit: () => void;
 }) {
     return (
-        <Show when={props.open}>
+        <Show when={props.open()}>
             <div class="modal-backdrop" onClick={props.onClose} />
             <div class="modal" onClick={(e) => e.stopPropagation()}>
-                <h3>Создать пользователя</h3>
+                <h3>Редактировать пользователя</h3>
 
                 <div class="form">
                     <label>
@@ -51,12 +52,7 @@ export default function CreateUserModal(props: {
                         Роль
                         <select
                             value={props.draft().role}
-                            onChange={(e) =>
-                                props.setDraft((p) => ({
-                                    ...p,
-                                    role: e.currentTarget.value as UserForm["role"],
-                                }))
-                            }
+                            onChange={(e) => props.setDraft((p) => ({ ...p, role: e.currentTarget.value as UserForm["role"] }))}
                         >
                             <option value="USER">USER</option>
                             <option value="ADMIN">ADMIN</option>
@@ -64,7 +60,7 @@ export default function CreateUserModal(props: {
                     </label>
 
                     <label>
-                        Пароль
+                        Новый пароль (оставьте пустым, чтобы не менять)
                         <input
                             type="password"
                             value={props.draft().password}
@@ -83,7 +79,7 @@ export default function CreateUserModal(props: {
 
                     <div class="row actions">
                         <button class="btn-secondary" onClick={props.onClose}>Отмена</button>
-                        <button onClick={props.onSubmit}>Создать</button>
+                        <button onClick={props.onSubmit}>Сохранить</button>
                     </div>
                 </div>
             </div>

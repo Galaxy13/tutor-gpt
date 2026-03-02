@@ -48,18 +48,23 @@ export const AdminApi = {
 
     createUser: (payload: UserForm, token: string) =>
         api<User>("/admin/users", "POST", payload, token),
+    updateUser: (id: string, payload: Omit<UserForm, 'password'>, token: string) =>
+        api<User>(`/admin/users/${id}`, 'PATCH', payload, token),
+    resetPassword: (id: string, password: string, token: string) =>
+        api<void>(`/admin/users/${id}/reset_password`, 'POST', { password }, token),
     deleteUser: (id: string, token: string) => api<void>(`/admin/users/${id}`, 'DELETE', undefined, token),
 
     createPrompt: (content: Record<string, string>, token: string) =>
         api<void>('/admin/prompt', 'POST', { content }, token),
 
+    userChats: (userId: string, token: string) =>
+        api<Chat[]>(`/admin/chats/${userId}`, 'GET', undefined, token),
     chatMessages: (chatId: string, token: string) =>
         api<Message[]>(`/admin/chats/messages/${chatId}`, 'GET', undefined, token),
 
-    createChatWithoutPrompt: (payload: {message: string, name: string}, token: string) =>
-        api<Chat>('/admin/chats', 'POST', payload, token),
+    createChat: (payload: {message: string, name: string}, token: string, withPrompt = true) =>
+        api<Chat>(`/admin/chats?withPrompt=${withPrompt}`, 'POST', payload, token),
 
-    sendChatWithoutPrompt: (chatId: string, message: string, token: string) =>
+    sendMessage: (chatId: string, message: string, token: string) =>
         api<Message>(`/admin/chats/messages/${chatId}`, 'POST', { message }, token),
-}
-
+};
