@@ -10,5 +10,5 @@ public record ChatDto(UUID id,
                       String name,
                       LocalDateTime createdAt,
                       Long promptVersion,
-                      String userName) {
+                      String username) {
 }

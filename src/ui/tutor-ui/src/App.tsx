@@ -54,6 +54,11 @@ export default function App() {
     const [editUserId, setEditUserId] = createSignal('');
     const [editUserDraft, setEditUserDraft] = createSignal<UserForm>(emptyUserForm());
 
+    const [myChats, setMyChats] = createSignal<Chat[]>([]);
+    const [selectedMyChatId, setSelectedMyChatId] = createSignal('');
+    const [myChatMessages, setMyChatMessages] = createSignal<Message[]>([]);
+    const [myChatDraft, setMyChatDraft] = createSignal('');
+
     const [viewingUser, setViewingUser] = createSignal<User | null>(null);
     const [userChats, setUserChats] = createSignal<Chat[]>([]);
     const [selectedUserChatId, setSelectedUserChatId] = createSignal('');
@@ -89,6 +94,10 @@ export default function App() {
         setPrompts([]);
         setSelectedAdminChatId('');
         setAdminTab('users');
+        setMyChats([]);
+        setSelectedMyChatId('');
+        setMyChatMessages([]);
+        setMyChatDraft('');
         setViewingUser(null);
         setUserChats([]);
         setSelectedUserChatId('');
@@ -270,32 +279,52 @@ export default function App() {
 
     const createAdminChat = async () => {
         const created = await AdminApi.createChat({ name: 'Новый чат', message: '' }, token(), true);
-        setAllChats((prev) => [created, ...prev]);
-        setAdminTab('chats');
-        setSelectedAdminChatId(created.id);
-        setAdminMessages([]);
+        setMyChats((prev) => [created, ...prev]);
+        setAdminTab('my_chats');
+        setSelectedMyChatId(created.id);
+        setMyChatMessages([]);
     };
 
     const createAdminPromptlessChat = async () => {
         const created = await AdminApi.createChat({ name: 'Чат без промпта', message: '' }, token(), false);
-        setAllChats((prev) => [created, ...prev]);
-        setAdminTab('chats');
-        setSelectedAdminChatId(created.id);
-        setAdminMessages([]);
+        setMyChats((prev) => [created, ...prev]);
+        setAdminTab('my_chats');
+        setSelectedMyChatId(created.id);
+        setMyChatMessages([]);
     };
 
-    const sendAdminMessage = async () => {
-        const text = adminDraft().trim();
-        if (!text || !selectedAdminChatId()) return;
+    // -- My Chats (admin's own chats) --
 
-        setAdminMessages((prev) => [
+    const openMyChatsTab = async () => {
+        setAdminTab('my_chats');
+        const userId = auth()?.user.id;
+        if (!userId) return;
+        try {
+            const chats = await AdminApi.userChats(userId, token());
+            setMyChats(chats);
+        } catch {
+            setMyChats([]);
+        }
+    };
+
+    const openMyChat = async (chatId: string) => {
+        setSelectedMyChatId(chatId);
+        const msgs = await AdminApi.chatMessages(chatId, token());
+        setMyChatMessages(msgs);
+    };
+
+    const sendMyChatMessage = async () => {
+        const text = myChatDraft().trim();
+        if (!text || !selectedMyChatId()) return;
+
+        setMyChatMessages((prev) => [
             ...prev,
-            { content: text, type: 'USER', chatId: selectedAdminChatId(), timestamp: new Date().toISOString() },
+            { content: text, type: 'USER', chatId: selectedMyChatId(), timestamp: new Date().toISOString() },
         ]);
-        setAdminDraft('');
+        setMyChatDraft('');
 
-        const reply = await AdminApi.sendMessage(selectedAdminChatId(), text, token());
-        setAdminMessages((prev) => [...prev, reply]);
+        const reply = await AdminApi.sendMessage(selectedMyChatId(), text, token(), true);
+        setMyChatMessages((prev) => [...prev, reply]);
     };
 
     // -- View User Chats --
@@ -356,10 +385,6 @@ export default function App() {
                                     onCreateChat={createAdminChat}
                                     onCreatePromptlessChat={createAdminPromptlessChat}
 
-                                    adminDraft={adminDraft}
-                                    setAdminDraft={setAdminDraft}
-                                    onSendAdminMessage={sendAdminMessage}
-
                                     showCreateUserModal={showCreateUserModal}
                                     setShowCreateUserModal={setShowCreateUserModal}
                                     newUserDraft={newUserDraft}
@@ -378,6 +403,15 @@ export default function App() {
                                     selectedUserChatId={selectedUserChatId}
                                     userChatMessages={userChatMessages}
                                     onOpenUserChat={openUserChat}
+
+                                    onOpenMyChatsTab={openMyChatsTab}
+                                    myChats={myChats}
+                                    selectedMyChatId={selectedMyChatId}
+                                    myChatMessages={myChatMessages}
+                                    onOpenMyChat={openMyChat}
+                                    myChatDraft={myChatDraft}
+                                    setMyChatDraft={setMyChatDraft}
+                                    onSendMyChatMessage={sendMyChatMessage}
                                 />
                             }
                         >

@@ -57,4 +57,4 @@ export type UserForm = {
     isActive: boolean;
 };
 
-export type AdminTab = 'users' | 'chats' | 'prompts' | 'user_chats';
+export type AdminTab = 'users' | 'chats' | 'my_chats' | 'prompts' | 'user_chats';

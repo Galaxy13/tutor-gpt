@@ -28,10 +28,6 @@ export default function AdminPanel(props: {
     onCreateChat: () => void;
     onCreatePromptlessChat: () => void;
 
-    adminDraft: Accessor<string>;
-    setAdminDraft: (v: string) => void;
-    onSendAdminMessage: () => void;
-
     showCreateUserModal: Accessor<boolean>;
     setShowCreateUserModal: (v: boolean) => void;
     newUserDraft: Accessor<UserForm>;
@@ -50,11 +46,20 @@ export default function AdminPanel(props: {
     selectedUserChatId: Accessor<string>;
     userChatMessages: Accessor<Message[]>;
     onOpenUserChat: (chatId: string) => void;
+
+    onOpenMyChatsTab: () => void;
+    myChats: Accessor<Chat[]>;
+    selectedMyChatId: Accessor<string>;
+    myChatMessages: Accessor<Message[]>;
+    onOpenMyChat: (chatId: string) => void;
+    myChatDraft: Accessor<string>;
+    setMyChatDraft: (v: string) => void;
+    onSendMyChatMessage: () => void;
 }) {
-    const handleChatKeyDown = (e: KeyboardEvent) => {
+    const handleMyChatKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            props.onSendAdminMessage();
+            props.onSendMyChatMessage();
         }
     };
 
@@ -86,6 +91,13 @@ export default function AdminPanel(props: {
 
                 <div class="nav-divider" />
                 <div class="nav-label">Действия</div>
+
+                <button
+                    class={`nav-action ${props.adminTab() === "my_chats" ? "active" : ""}`}
+                    onClick={props.onOpenMyChatsTab}
+                >
+                    Мои чаты
+                </button>
 
                 <button class="nav-action" onClick={props.onCreateChat}>
                     + Создать чат
@@ -163,7 +175,7 @@ export default function AdminPanel(props: {
                     />
                 </Show>
 
-                {/* ===== CHATS TAB ===== */}
+                {/* ===== CHATS TAB (view-only) ===== */}
                 <Show when={props.adminTab() === "chats"}>
                     <div class="chat-layout" style="height: calc(100vh - 57px)">
                         <aside class="chat-sidebar">
@@ -181,6 +193,8 @@ export default function AdminPanel(props: {
                                     >
                                         <strong>{c.name || "Без названия"}</strong>
                                         <small>
+                                            {c.username ? `@${c.username}` : ""}
+                                            {c.username && c.promptVersion ? " · " : ""}
                                             {c.promptVersion ? `v${c.promptVersion}` : "без промпта"}
                                             {" · "}
                                             {new Date(c.createdAt).toLocaleDateString()}
@@ -207,15 +221,64 @@ export default function AdminPanel(props: {
                                         )}
                                     </For>
                                 </div>
+                            </Show>
+                        </div>
+                    </div>
+                </Show>
+
+                {/* ===== MY CHATS TAB (admin's own chats with send) ===== */}
+                <Show when={props.adminTab() === "my_chats"}>
+                    <div class="chat-layout" style="height: calc(100vh - 57px)">
+                        <aside class="chat-sidebar">
+                            <div class="sidebar-header">
+                                <h3>Мои чаты</h3>
+                            </div>
+
+                            <For each={props.myChats()} fallback={
+                                <div class="empty-state"><p>Нет чатов</p></div>
+                            }>
+                                {(c) => (
+                                    <button
+                                        class={`sidebar-btn ${props.selectedMyChatId() === c.id ? "active" : ""}`}
+                                        onClick={() => props.onOpenMyChat(c.id)}
+                                    >
+                                        <strong>{c.name || "Без названия"}</strong>
+                                        <small>
+                                            {c.promptVersion ? `v${c.promptVersion}` : "без промпта"}
+                                            {" · "}
+                                            {new Date(c.createdAt).toLocaleDateString()}
+                                        </small>
+                                    </button>
+                                )}
+                            </For>
+                        </aside>
+
+                        <div class="chat-main">
+                            <Show when={props.selectedMyChatId()} fallback={
+                                <div class="empty-state" style="flex:1">
+                                    <p>Выберите чат из списка слева</p>
+                                </div>
+                            }>
+                                <div class="messages">
+                                    <For each={props.myChatMessages()}>
+                                        {(msg) => (
+                                            <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
+                                                <Show when={msg.type === "ASSISTANT"} fallback={<span>{msg.content}</span>}>
+                                                    <div innerHTML={md(msg.content)} />
+                                                </Show>
+                                            </div>
+                                        )}
+                                    </For>
+                                </div>
 
                                 <div class="compose">
                                     <textarea
-                                        value={props.adminDraft()}
-                                        onInput={(e) => props.setAdminDraft(e.currentTarget.value)}
-                                        onKeyDown={handleChatKeyDown}
+                                        value={props.myChatDraft()}
+                                        onInput={(e) => props.setMyChatDraft(e.currentTarget.value)}
+                                        onKeyDown={handleMyChatKeyDown}
                                         placeholder="Напишите сообщение..."
                                     />
-                                    <button onClick={props.onSendAdminMessage}>Отправить</button>
+                                    <button onClick={props.onSendMyChatMessage}>Отправить</button>
                                 </div>
                             </Show>
                         </div>
@@ -311,8 +374,10 @@ export default function AdminPanel(props: {
                                                     onClick={() => props.onOpenUserChat(c.id)}
                                                 >
                                                     <strong>{c.name || "Без названия"}</strong>
-                                                    <small>{new Date(c.createdAt).toLocaleDateString()}</small>
-                                                    <small>{c.username}</small>
+                                                    <small>
+                                                        {c.username ? `@${c.username}` : ""}
+                                                        {new Date(c.createdAt).toLocaleDateString()}
+                                                    </small>
                                                 </button>
                                             )}
                                         </For>
