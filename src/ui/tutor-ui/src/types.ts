@@ -40,6 +40,7 @@ export type Message = {
     type: 'USER' | 'ASSISTANT' | 'SYSTEM' | 'TOOL';
     chatId: string;
     timestamp: string;
+    imageUrl?: string;
 };
 
 export type Prompt = {

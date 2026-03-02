@@ -67,7 +67,9 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
                                     entity.setTimestamp(LocalDateTime.now());
 
                                     String fileKey = (String) m.getMetadata().get("imageId");
-                                    entity.setId(UUID.fromString(fileKey));
+                                    if (fileKey != null) {
+                                        entity.setImageId(UUID.fromString(fileKey));
+                                    }
 
                                     return entity;
                                 })

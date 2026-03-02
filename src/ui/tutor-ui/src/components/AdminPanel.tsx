@@ -58,8 +58,26 @@ export default function AdminPanel(props: {
 
     onSelectMyChatImage: (file: File | null) => void;
     selectedMyChatImageName: Accessor<string | null>;
+
+    messagesLoading: Accessor<boolean>;
+    myChatSending: Accessor<boolean>;
 }) {
     let myChatImageInputRef: HTMLInputElement | undefined;
+
+    const renderBubble = (msg: Message) => (
+        <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
+            <Show when={msg.imageUrl}>
+                <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
+                    <img class="bubble-image" src={msg.imageUrl} alt="" />
+                </a>
+            </Show>
+            <Show when={msg.type === "ASSISTANT"} fallback={
+                <Show when={msg.content}><span>{msg.content}</span></Show>
+            }>
+                <div innerHTML={md(msg.content)} />
+            </Show>
+        </div>
+    );
 
     const handleMyChatKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -216,15 +234,16 @@ export default function AdminPanel(props: {
                                 </div>
                             }>
                                 <div class="messages">
-                                    <For each={props.adminMessages()}>
-                                        {(msg) => (
-                                            <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
-                                                <Show when={msg.type === "ASSISTANT"} fallback={<span>{msg.content}</span>}>
-                                                    <div innerHTML={md(msg.content)} />
-                                                </Show>
-                                            </div>
-                                        )}
-                                    </For>
+                                    <Show when={!props.messagesLoading()} fallback={
+                                        <div class="loading-dots">
+                                            <span>Загрузка...</span>
+                                            <div class="dots"><span /><span /><span /></div>
+                                        </div>
+                                    }>
+                                        <For each={props.adminMessages()}>
+                                            {(msg) => renderBubble(msg)}
+                                        </For>
+                                    </Show>
                                 </div>
                             </Show>
                         </div>
@@ -265,15 +284,22 @@ export default function AdminPanel(props: {
                                 </div>
                             }>
                                 <div class="messages">
-                                    <For each={props.myChatMessages()}>
-                                        {(msg) => (
-                                            <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
-                                                <Show when={msg.type === "ASSISTANT"} fallback={<span>{msg.content}</span>}>
-                                                    <div innerHTML={md(msg.content)} />
-                                                </Show>
+                                    <Show when={!props.messagesLoading()} fallback={
+                                        <div class="loading-dots">
+                                            <span>Загрузка...</span>
+                                            <div class="dots"><span /><span /><span /></div>
+                                        </div>
+                                    }>
+                                        <For each={props.myChatMessages()}>
+                                            {(msg) => renderBubble(msg)}
+                                        </For>
+                                        <Show when={props.myChatSending()}>
+                                            <div class="typing-indicator">
+                                                <span>Думает...</span>
+                                                <div class="dots"><span /><span /><span /></div>
                                             </div>
-                                        )}
-                                    </For>
+                                        </Show>
+                                    </Show>
                                 </div>
 
                                 <div class="compose">
@@ -409,15 +435,16 @@ export default function AdminPanel(props: {
                                             </div>
                                         }>
                                             <div class="messages">
-                                                <For each={props.userChatMessages()}>
-                                                    {(msg) => (
-                                                        <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
-                                                            <Show when={msg.type === "ASSISTANT"} fallback={<span>{msg.content}</span>}>
-                                                                <div innerHTML={md(msg.content)} />
-                                                            </Show>
-                                                        </div>
-                                                    )}
-                                                </For>
+                                                <Show when={!props.messagesLoading()} fallback={
+                                                    <div class="loading-dots">
+                                                        <span>Загрузка...</span>
+                                                        <div class="dots"><span /><span /><span /></div>
+                                                    </div>
+                                                }>
+                                                    <For each={props.userChatMessages()}>
+                                                        {(msg) => renderBubble(msg)}
+                                                    </For>
+                                                </Show>
                                             </div>
                                         </Show>
                                     </div>
