@@ -32,6 +32,12 @@ spring:
       script:
         enabled: false
 
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+  bucket: chat-images
+
 jwt:
   secret: N4aQn+nsjtQ05/O0ca5BkUOx6mebpTOc7AVUbVSLAW4=
   expiration: 3600000

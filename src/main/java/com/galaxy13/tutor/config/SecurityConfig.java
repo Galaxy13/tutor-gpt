@@ -2,6 +2,7 @@ package com.galaxy13.tutor.config;
 
 import com.galaxy13.tutor.security.JWTUtils;
 import com.galaxy13.tutor.security.JwtAuthenticationFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,8 +24,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -40,28 +39,29 @@ public class SecurityConfig {
         return http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(
-                        session ->
-                                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/v1/auth/**").permitAll()
-                                .requestMatchers("/",
-                                        "/index.html",
-                                        "/favicon.ico",
-                                        "/assets/**"
-                                        ).permitAll()
-                                .requestMatchers(
-                                        "/api-docs/**",
-                                        "/swagger-ui/**",
-                                        "/swagger-ui.html")
-                                .permitAll()
-                                .requestMatchers("/actuator/health").permitAll()
-                                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                                .anyRequest().authenticated()
-                ).authenticationProvider(authenticationProvider())
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers("/api/v1/auth/**")
+                                        .permitAll()
+                                        .requestMatchers(
+                                                "/", "/index.html", "/favicon.ico", "/assets/**")
+                                        .permitAll()
+                                        .requestMatchers(
+                                                "/api-docs/**",
+                                                "/swagger-ui/**",
+                                                "/swagger-ui.html")
+                                        .permitAll()
+                                        .requestMatchers("/actuator/health")
+                                        .permitAll()
+                                        .requestMatchers("/api/v1/admin/**")
+                                        .hasRole("ADMIN")
+                                        .anyRequest()
+                                        .authenticated())
+                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(
-                        jwtAuthenticationFilter(),
-                        UsernamePasswordAuthenticationFilter.class).build();
+                        jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
@@ -73,14 +73,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(
-                List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:8081")
-        );
+                List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:8081"));
         corsConfiguration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-        );
+                List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(
-                List.of("Authorization", "Content-Type", "X-Requested-With")
-        );
+                List.of("Authorization", "Content-Type", "X-Requested-With"));
         corsConfiguration.setExposedHeaders(List.of("Authorization"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setMaxAge(3600L);
@@ -92,7 +89,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
+        DaoAuthenticationProvider authenticationProvider =
+                new DaoAuthenticationProvider(userDetailsService);
         authenticationProvider.setPasswordEncoder(new BCryptPasswordEncoder());
         return authenticationProvider;
     }

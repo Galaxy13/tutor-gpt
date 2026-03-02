@@ -5,11 +5,10 @@ import com.galaxy13.tutor.service.prompt.PromptService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/prompt")
@@ -42,7 +41,8 @@ public class AdminPromptController {
 
     @PostMapping
     @Operation(description = "Set (create) new prompt")
-    public ResponseEntity<PromptDto> createPrompt(@Valid @RequestBody PromptDto.CreatePromptRequest request) {
+    public ResponseEntity<PromptDto> createPrompt(
+            @Valid @RequestBody PromptDto.CreatePromptRequest request) {
         PromptDto createdPrompt = promptService.createPrompt(request);
         return ResponseEntity.ok(createdPrompt);
     }

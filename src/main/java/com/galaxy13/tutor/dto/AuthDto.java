@@ -1,6 +1,5 @@
 package com.galaxy13.tutor.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -98,4 +97,3 @@ public class AuthDto {
         private String createdAt;
     }
 }
-

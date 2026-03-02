@@ -4,18 +4,17 @@ import com.galaxy13.tutor.config.JwtConfigurationProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import javax.crypto.SecretKey;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 @Component
 @Slf4j
@@ -29,7 +28,8 @@ public class JWTUtils {
         if (userDetails == null) {
             throw new IllegalStateException("User details are null in authentication");
         }
-        return createToken(generateAccessClaim(), userDetails.getUsername(), properties.getExpiration());
+        return createToken(
+                generateAccessClaim(), userDetails.getUsername(), properties.getExpiration());
     }
 
     public String generateToken(String username) {
@@ -41,7 +41,10 @@ public class JWTUtils {
         if (userDetails == null) {
             throw new IllegalStateException("User details are null in authentication");
         }
-        return createToken(generateRefreshClaim(), userDetails.getUsername(), properties.getRefreshExpiration());
+        return createToken(
+                generateRefreshClaim(),
+                userDetails.getUsername(),
+                properties.getRefreshExpiration());
     }
 
     public String generateRefreshToken(String username) {
@@ -66,13 +69,13 @@ public class JWTUtils {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
             return true;
         } catch (MalformedJwtException e) {
-            log.error("Invalid JWT Token: {}",  e.getMessage());
+            log.error("Invalid JWT Token: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            log.error("Expired JWT Token: {}",  e.getMessage());
+            log.error("Expired JWT Token: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT Token: {}",  e.getMessage());
+            log.error("Unsupported JWT Token: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}",  e.getMessage());
+            log.error("JWT claims string is empty: {}", e.getMessage());
         }
         return false;
     }

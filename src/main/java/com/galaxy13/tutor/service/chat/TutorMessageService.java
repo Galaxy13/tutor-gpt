@@ -11,6 +11,12 @@ import com.galaxy13.tutor.model.Role;
 import com.galaxy13.tutor.repository.ChatMessageJpaRepository;
 import com.galaxy13.tutor.repository.ChatRepository;
 import com.galaxy13.tutor.security.UserPrincipal;
+import com.galaxy13.tutor.service.image.ImageStorageService;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.content.Media;
 import org.springframework.core.convert.converter.Converter;
@@ -21,11 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -39,17 +40,30 @@ public class TutorMessageService implements MessageService {
 
     private final Converter<ChatMessage, MessageDto> messageConverter;
 
+    private final ImageStorageService imageStorageService;
+
     @Override
     @Transactional(readOnly = true)
     public List<MessageDto> getMessagesByChatId(UUID chatId, UserPrincipal principal) {
         Chat chat = getChatAndValidateAccess(chatId, principal);
         return messageRepository.findByConversationIdOrderByTimestampAsc(chat.getId()).stream()
-                .map(messageConverter::convert).toList();
+                .map(
+                        s -> {
+                            MessageDto dto = messageConverter.convert(s);
+                            if (s.getImageId() != null) {
+                                dto.setImageUrl(
+                                        imageStorageService.getPresignedDownloadUrl(
+                                                s.getImageId(), 1));
+                            }
+                            return dto;
+                        })
+                .toList();
     }
 
     @Transactional
     @Override
-    public MessageDto sendMessage(UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal) {
+    public MessageDto sendMessage(
+            UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal) {
         Chat chat = getChatAndValidateAccess(chatId, principal);
         String response = aiClient.chat(chat.getId(), request.getMessage(), true);
         return MessageDto.builder()
@@ -62,7 +76,8 @@ public class TutorMessageService implements MessageService {
 
     @Transactional
     @Override
-    public MessageDto sendMessageWithoutPrompt(UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal) {
+    public MessageDto sendMessageWithoutPrompt(
+            UUID chatId, MessageDto.MessageRequest request, UserPrincipal principal) {
         if (!principal.getRole().equals(Role.ADMIN)) {
             throw new BadRequestException("Only admin can send messages without prompt");
         }
@@ -79,34 +94,45 @@ public class TutorMessageService implements MessageService {
 
     @Transactional
     @Override
-    public MessageDto sendMessageWithImage(UUID chatId,
-                                           MessageDto.MessageRequest request,
-                                           UserPrincipal principal,
-                                           boolean withPrompt, MultipartFile image){
+    public MessageDto sendMessageWithImage(
+            UUID chatId,
+            MessageDto.MessageRequest request,
+            UserPrincipal principal,
+            boolean withPrompt,
+            MultipartFile image) {
         Chat chat = getChatAndValidateAccess(chatId, principal);
 
         if (!withPrompt && !principal.getRole().equals(Role.ADMIN)) {
             throw new NotEnoughRightsException("User has no right to send promptless message");
         }
 
-        MimeType mimeType = (image.getContentType() != null) ?
-                MimeTypeUtils.parseMimeType(image.getContentType()) : MimeTypeUtils.IMAGE_JPEG;
+        MimeType mimeType =
+                (image.getContentType() != null)
+                        ? MimeTypeUtils.parseMimeType(image.getContentType())
+                        : MimeTypeUtils.IMAGE_JPEG;
+
+        String imageKey = imageStorageService.saveImage(image);
 
         Resource imageResource;
 
         try {
-            imageResource = new ByteArrayResource(image.getBytes()) {
-                @Override public String getFilename() {
-                    return image.getOriginalFilename();
-                }
-            };
+            imageResource =
+                    new ByteArrayResource(image.getBytes()) {
+                        @Override
+                        public String getFilename() {
+                            return image.getOriginalFilename();
+                        }
+                    };
         } catch (IOException e) {
             throw new BadRequestException("Image resource cannot be read");
         }
 
         Media media = new Media(mimeType, imageResource);
+        Map<String, Object> metadata = Map.of("imageId", imageKey);
 
-        String response = aiClient.chatWithImage(chat.getId(), request.getMessage(), withPrompt, media);
+        String response =
+                aiClient.chatWithImage(
+                        chat.getId(), request.getMessage(), withPrompt, media, metadata);
         return MessageDto.builder()
                 .chatId(chatId)
                 .type(ChatMessage.MessageType.ASSISTANT)
@@ -116,10 +142,16 @@ public class TutorMessageService implements MessageService {
     }
 
     private Chat getChatAndValidateAccess(UUID chatId, UserPrincipal principal) {
-        Chat chat = chatRepository.findChatById(chatId).orElseThrow(() ->
-                new ResourceNotFoundException("Chat with id:" + chatId + " not found"));
+        Chat chat =
+                chatRepository
+                        .findChatById(chatId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Chat with id:" + chatId + " not found"));
 
-        if (!principal.getRole().equals(Role.ADMIN) && !chat.getUser().getId().equals(principal.getId())) {
+        if (!principal.getRole().equals(Role.ADMIN)
+                && !chat.getUser().getId().equals(principal.getId())) {
             throw new BadRequestException("User is not allowed to access this chat");
         }
         return chat;

@@ -22,14 +22,16 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Login with username and password")
-    public ResponseEntity<AuthDto.AuthResponse> login(@Valid @RequestBody AuthDto.LoginRequest request) {
+    public ResponseEntity<AuthDto.AuthResponse> login(
+            @Valid @RequestBody AuthDto.LoginRequest request) {
         AuthDto.AuthResponse authResponse = authService.login(request);
         return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/refresh")
     @Operation(summary = "Refresh access token")
-    public ResponseEntity<AuthDto.AuthResponse> refresh(@Valid @RequestBody AuthDto.RefreshTokenRequest request) {
+    public ResponseEntity<AuthDto.AuthResponse> refresh(
+            @Valid @RequestBody AuthDto.RefreshTokenRequest request) {
         AuthDto.AuthResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
     }

@@ -1,11 +1,9 @@
 package com.galaxy13.tutor.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.*;
-
 import java.util.UUID;
+import lombok.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -43,8 +41,7 @@ public class UserDto {
     @NoArgsConstructor
     public static class ChangePasswordRequest {
 
-        @NotBlank
-        private String currentPassword;
+        @NotBlank private String currentPassword;
 
         @Size(min = 8, message = "Password must be at least 8 characters")
         private String newPassword;

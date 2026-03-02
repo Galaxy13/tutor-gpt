@@ -13,6 +13,7 @@ public class MessageDtoConverter implements Converter<ChatMessage, MessageDto> {
                 .type(source.getType())
                 .content(source.getContent())
                 .chatId(source.getConversationId())
-                .timestamp(source.getTimestamp()).build();
+                .timestamp(source.getTimestamp())
+                .build();
     }
 }

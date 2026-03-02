@@ -13,7 +13,9 @@ public class MessageConverter implements Converter<ChatMessage, Message> {
             case USER -> new UserMessage(source.getContent());
             case SYSTEM -> new SystemMessage(source.getContent());
             case ASSISTANT -> new AssistantMessage(source.getContent());
-            default -> throw new IllegalArgumentException("Unsupported message type:" + source.getType());
+            default ->
+                    throw new IllegalArgumentException(
+                            "Unsupported message type:" + source.getType());
         };
     }
 }

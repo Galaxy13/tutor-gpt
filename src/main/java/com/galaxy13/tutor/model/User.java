@@ -1,10 +1,9 @@
 package com.galaxy13.tutor.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.Set;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "users")
@@ -42,5 +41,4 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Chat> chats;
-
 }
