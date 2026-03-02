@@ -180,7 +180,11 @@ export default function App() {
 
         setMessages((prev) => [
             ...prev,
-            { content: text, type: "USER", chatId: chat!.id, timestamp: new Date().toISOString() },
+            {
+                content: text, type: "USER", chatId: chat!.id,
+                timestamp: new Date().toISOString(),
+                imageUrl: image ? URL.createObjectURL(image) : undefined,
+            },
         ]);
         setDraft("");
         setSelectedUserImage(null);
@@ -360,7 +364,11 @@ export default function App() {
 
         setMyChatMessages((prev) => [
             ...prev,
-            { content: text, type: 'USER', chatId: selectedMyChatId(), timestamp: new Date().toISOString() },
+            {
+                content: text, type: 'USER', chatId: selectedMyChatId(),
+                timestamp: new Date().toISOString(),
+                imageUrl: image ? URL.createObjectURL(image) : undefined,
+            },
         ]);
         setMyChatDraft('');
         setSelectedMyChatImage(null);
