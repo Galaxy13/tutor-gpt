@@ -374,8 +374,10 @@ export default function AdminPanel(props: {
                                                     onClick={() => props.onOpenUserChat(c.id)}
                                                 >
                                                     <strong>{c.name || "Без названия"}</strong>
-                                                    <small>{new Date(c.createdAt).toLocaleDateString()}</small>
-                                                    <small>{c.username}</small>
+                                                    <small>
+                                                        {c.username ? `@${c.username}` : ""}
+                                                        {new Date(c.createdAt).toLocaleDateString()}
+                                                    </small>
                                                 </button>
                                             )}
                                         </For>

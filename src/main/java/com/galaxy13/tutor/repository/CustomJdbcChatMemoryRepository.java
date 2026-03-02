@@ -46,8 +46,6 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
         List<ChatMessage> existing = chatMessageRepository.findByConversationIdOrderByTimestampAsc(convId);
         int existingCount = existing.size();
 
-        // MessageWindowChatMemory may trim old messages when the window overflows.
-        // If the incoming list is shorter or leading messages changed, do a full replace.
         boolean needsFullReplace = messages.size() < existingCount
                 || !prefixMatches(existing, messages, existingCount);
 
@@ -57,7 +55,6 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
             existingCount = 0;
         }
 
-        // Only save messages beyond what already exists in DB
         List<ChatMessage> newEntities = messages.subList(existingCount, messages.size()).stream()
                 .map(m -> {
                     ChatMessage entity = new ChatMessage();
