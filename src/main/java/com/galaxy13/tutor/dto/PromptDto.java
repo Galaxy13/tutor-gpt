@@ -1,8 +1,7 @@
 package com.galaxy13.tutor.dto;
 
-import lombok.*;
-
 import java.util.Map;
+import lombok.*;
 
 @Builder
 @Getter

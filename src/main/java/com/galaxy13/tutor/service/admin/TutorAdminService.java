@@ -7,16 +7,15 @@ import com.galaxy13.tutor.exception.ResourceNotFoundException;
 import com.galaxy13.tutor.model.Role;
 import com.galaxy13.tutor.model.User;
 import com.galaxy13.tutor.repository.UserRepository;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -32,16 +31,15 @@ public class TutorAdminService implements AdminService {
     @Override
     @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {
-        return userRepository.findAll()
-                .stream().map(userDtoConverter::convert).toList();
+        return userRepository.findAll().stream().map(userDtoConverter::convert).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<UserDto> findUsersByNameAndSurname(String name, String surname) {
-        return userRepository.getUserByNameLikeAndSurnameLike(name, surname)
-                .stream()
-                .map(userDtoConverter::convert).toList();
+        return userRepository.getUserByNameLikeAndSurnameLike(name, surname).stream()
+                .map(userDtoConverter::convert)
+                .toList();
     }
 
     @Override
@@ -71,8 +69,13 @@ public class TutorAdminService implements AdminService {
             throw new BadRequestException("Username already exists");
         }
 
-        User user = userRepository.getUserById(userId).orElseThrow(
-                () -> new ResourceNotFoundException("User with id: " + userId + " not found"));
+        User user =
+                userRepository
+                        .getUserById(userId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "User with id: " + userId + " not found"));
         user.setName(request.getName());
         user.setSurname(request.getSurname());
         user.setUsername(request.getUsername());
@@ -93,8 +96,13 @@ public class TutorAdminService implements AdminService {
     @Override
     @Transactional
     public void resetUserPassword(UUID id, AdminDto.ResetPasswordRequest request) {
-        User user = userRepository.getUserById(id).orElseThrow(
-                () -> new ResourceNotFoundException("User with id: " + id + " not found"));
+        User user =
+                userRepository
+                        .getUserById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "User with id: " + id + " not found"));
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
     }
@@ -102,8 +110,13 @@ public class TutorAdminService implements AdminService {
     @Override
     @Transactional
     public void deleteUser(UUID id) {
-        User user = userRepository.getUserById(id).orElseThrow(
-                () -> new ResourceNotFoundException("User with id: " + id + " not found"));
+        User user =
+                userRepository
+                        .getUserById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "User with id: " + id + " not found"));
         if (user.getRole().equals(Role.ADMIN)) {
             long adminCount = userRepository.countByRole(Role.ADMIN);
             if (adminCount <= 1) {

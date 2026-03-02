@@ -9,8 +9,6 @@ import org.springframework.stereotype.Component;
 public class PromptDtoConverter implements Converter<Prompt, PromptDto> {
     @Override
     public PromptDto convert(Prompt source) {
-        return PromptDto.builder()
-                .version(source.getId())
-                .content(source.getContent()).build();
+        return PromptDto.builder().version(source.getId()).content(source.getContent()).build();
     }
 }

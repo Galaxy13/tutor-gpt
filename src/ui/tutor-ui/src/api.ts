@@ -3,13 +3,14 @@ import type { AuthResponse, Chat, Message, Prompt, User, UserForm } from "./type
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080/api/v1';
 
 export async function api<T>(path: string, method = 'GET', body?: unknown, token?: string): Promise<T> {
+    const isFormData = body instanceof FormData;
     const response = await fetch(`${API_BASE}${path}`, {
         method,
         headers: {
-            'Content-Type': 'application/json',
+            ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
             ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? (isFormData ? body as FormData : JSON.stringify(body)) : undefined,
     });
 
     if (!response.ok) throw new Error(await response.text());
@@ -38,6 +39,14 @@ export const ChatApi = {
         api<Message[]>(`/chat_info/messages/${chatId}`, 'GET', undefined, token),
     sendMessage: (chatId: string, message: string, token: string) =>
         api<Message>(`/message/${chatId}`, 'POST', { message }, token),
+
+    sendMessageWithImage: (chatId: string, message: string, image: File, token: string, withPrompt: boolean) => {
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('request', new Blob([JSON.stringify({ message })], { type: 'application/json' }));
+
+        return api<Message>(`/message/image/${chatId}?withPrompt=${withPrompt}`, 'POST', formData, token);
+    },
 };
 
 export const AdminApi = {
@@ -67,4 +76,12 @@ export const AdminApi = {
 
     sendMessage: (chatId: string, message: string, token: string, withPrompt = true) =>
         api<Message>(`/admin/chats/messages/${chatId}?withPrompt=${withPrompt}`, 'POST', { message }, token),
+
+    sendMessageWithImage: (chatId: string, message: string, image: File, token: string, withPrompt = true) => {
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('request', new Blob([JSON.stringify({ message })], { type: 'application/json' }));
+
+        return api<Message>(`/admin/chats/messages/image/${chatId}?withPrompt=${withPrompt}`, 'POST', formData, token);
+    },
 };

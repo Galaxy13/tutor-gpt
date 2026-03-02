@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     conversation_id uuid references chats(id),
     content TEXT NOT NULL,
     type VARCHAR(10) NOT NULL CHECK (type IN ('USER', 'ASSISTANT', 'SYSTEM', 'TOOL')),
+    image_id uuid,
     "timestamp" TIMESTAMP NOT NULL
 );
 

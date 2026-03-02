@@ -1,16 +1,15 @@
 package com.galaxy13.tutor.repository;
 
 import com.galaxy13.tutor.model.ChatMessage;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,15 +23,13 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
 
     @Override
     public List<String> findConversationIds() {
-        return chatRepository.findAllIds()
-                .stream()
-                .map(UUID::toString)
-                .toList();
+        return chatRepository.findAllIds().stream().map(UUID::toString).toList();
     }
 
     @Override
     public List<Message> findByConversationId(String conversationId) {
-        return chatMessageRepository.findByConversationIdOrderByTimestampAsc(UUID.fromString(conversationId))
+        return chatMessageRepository
+                .findByConversationIdOrderByTimestampAsc(UUID.fromString(conversationId))
                 .stream()
                 .map(converter::convert)
                 .toList();
@@ -43,11 +40,13 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
     public void saveAll(String conversationId, List<Message> messages) {
         UUID convId = UUID.fromString(conversationId);
 
-        List<ChatMessage> existing = chatMessageRepository.findByConversationIdOrderByTimestampAsc(convId);
+        List<ChatMessage> existing =
+                chatMessageRepository.findByConversationIdOrderByTimestampAsc(convId);
         int existingCount = existing.size();
 
-        boolean needsFullReplace = messages.size() < existingCount
-                || !prefixMatches(existing, messages, existingCount);
+        boolean needsFullReplace =
+                messages.size() < existingCount
+                        || !prefixMatches(existing, messages, existingCount);
 
         if (needsFullReplace) {
             chatMessageRepository.deleteByConversationId(convId);
@@ -55,15 +54,24 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
             existingCount = 0;
         }
 
-        List<ChatMessage> newEntities = messages.subList(existingCount, messages.size()).stream()
-                .map(m -> {
-                    ChatMessage entity = new ChatMessage();
-                    entity.setConversationId(convId);
-                    entity.setContent(m.getText());
-                    entity.setType(ChatMessage.MessageType.valueOf(m.getMessageType().name()));
-                    entity.setTimestamp(LocalDateTime.now());
-                    return entity;
-                }).toList();
+        List<ChatMessage> newEntities =
+                messages.subList(existingCount, messages.size()).stream()
+                        .map(
+                                m -> {
+                                    ChatMessage entity = new ChatMessage();
+                                    entity.setConversationId(convId);
+                                    entity.setContent(m.getText());
+                                    entity.setType(
+                                            ChatMessage.MessageType.valueOf(
+                                                    m.getMessageType().name()));
+                                    entity.setTimestamp(LocalDateTime.now());
+
+                                    String fileKey = (String) m.getMetadata().get("imageId");
+                                    entity.setId(UUID.fromString(fileKey));
+
+                                    return entity;
+                                })
+                        .toList();
 
         if (!newEntities.isEmpty()) {
             chatMessageRepository.saveAll(newEntities);

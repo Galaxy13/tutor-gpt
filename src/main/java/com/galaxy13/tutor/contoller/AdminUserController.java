@@ -7,12 +7,11 @@ import com.galaxy13.tutor.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/users")
@@ -33,7 +32,8 @@ public class AdminUserController {
 
     @GetMapping("/search")
     @Operation(summary = "Search users")
-    public ResponseEntity<List<UserDto>> searchUsers(@RequestParam String name, @RequestParam String surname) {
+    public ResponseEntity<List<UserDto>> searchUsers(
+            @RequestParam String name, @RequestParam String surname) {
         List<UserDto> users = adminService.findUsersByNameAndSurname(name, surname);
         return ResponseEntity.ok(users);
     }
@@ -47,7 +47,8 @@ public class AdminUserController {
 
     @PostMapping
     @Operation(summary = "Register a new user")
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody AdminDto.UserRegisterRequest request) {
+    public ResponseEntity<UserDto> createUser(
+            @Valid @RequestBody AdminDto.UserRegisterRequest request) {
         UserDto user = adminService.registerUser(request);
         return ResponseEntity.ok(user);
     }
@@ -55,8 +56,7 @@ public class AdminUserController {
     @PatchMapping("/{id}")
     @Operation(summary = "Update user info")
     public ResponseEntity<UserDto> updateUser(
-            @PathVariable UUID id,
-            @Valid @RequestBody AdminDto.UserUpdateRequest request) {
+            @PathVariable UUID id, @Valid @RequestBody AdminDto.UserUpdateRequest request) {
         UserDto user = adminService.updateUser(id, request);
         return ResponseEntity.ok(user);
     }
@@ -64,16 +64,14 @@ public class AdminUserController {
     @PostMapping("/{id}/reset_password")
     @Operation(summary = "Reset user password")
     public ResponseEntity<Void> resetPassword(
-            @PathVariable UUID id,
-            @Valid @RequestBody AdminDto.ResetPasswordRequest request) {
+            @PathVariable UUID id, @Valid @RequestBody AdminDto.ResetPasswordRequest request) {
         adminService.resetUserPassword(id, request);
         return ResponseEntity.ok(null);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user")
-    public ResponseEntity<Void> deleteUser(
-            @PathVariable UUID id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         adminService.deleteUser(id);
         return ResponseEntity.ok(null);
     }

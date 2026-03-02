@@ -16,7 +16,12 @@ export default function UserLayout(props: {
 
     setDraft: (v: string) => void;
     onSend: () => void;
+
+    selectedImageName: Accessor<string | null>;
+    onSelectImage: (file: File | null) => void;
 }) {
+    let imageInputRef: HTMLInputElement | undefined;
+
     const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -64,7 +69,21 @@ export default function UserLayout(props: {
                         onKeyDown={handleKeyDown}
                         placeholder="Напишите сообщение..."
                     />
-                    <button onClick={props.onSend}>Отправить</button>
+                    <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        style="display:none"
+                        onChange={(e) => props.onSelectImage(e.currentTarget.files?.[0] ?? null)}
+                    />
+
+                    <div class="compose-actions">
+                        <button class="btn-secondary" onClick={() => imageInputRef?.click()}>+ Изображение</button>
+                        <Show when={props.selectedImageName()}>
+                            <small>Файл: {props.selectedImageName()}</small>
+                        </Show>
+                        <button onClick={props.onSend}>Отправить</button>
+                    </div>
                 </div>
             </div>
         </div>

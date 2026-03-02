@@ -1,13 +1,12 @@
 package com.galaxy13.tutor.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "chat_messages")
@@ -34,7 +33,13 @@ public class ChatMessage {
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
+    @Column(name = "image_id", updatable = false)
+    private UUID imageId;
+
     public enum MessageType {
-        USER, ASSISTANT, SYSTEM, TOOL
+        USER,
+        ASSISTANT,
+        SYSTEM,
+        TOOL
     }
 }

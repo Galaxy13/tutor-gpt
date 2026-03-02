@@ -15,10 +15,8 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +38,8 @@ public class TutorAuthService implements AuthService {
     public AuthDto.AuthResponse login(AuthDto.LoginRequest request) {
         Authentication authentication =
                 authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+                        new UsernamePasswordAuthenticationToken(
+                                request.getUsername(), request.getPassword()));
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
         if (principal == null) {
@@ -105,8 +104,10 @@ public class TutorAuthService implements AuthService {
         }
 
         String username = jwtUtils.extractUsername(refreshToken);
-        User user = userRepository.findUserByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user =
+                userRepository
+                        .findUserByUsername(username)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!user.getIsActive()) throw new BadRequestException("User is inactive");
 

@@ -1,10 +1,12 @@
-import org.springframework.boot.gradle.tasks.run.BootRun
+import com.diffplug.spotless.java.GoogleJavaFormatStep
 
 plugins {
     java
     id("org.springframework.boot") version "4.0.2"
     id("io.spring.dependency-management") version "1.1.7"
+    id("com.diffplug.spotless") version "8.2.1"
 }
+
 val springAiVersion by extra("2.0.0-M2")
 
 group = "com.galaxy13"
@@ -16,6 +18,14 @@ java {
         languageVersion = JavaLanguageVersion.of(25)
     }
 }
+
+spotless {
+    java {
+        googleJavaFormat(GoogleJavaFormatStep.defaultVersion()).skipJavadocFormatting().aosp()
+        targetExclude("build/**", "/backend/build/generated/**")
+    }
+}
+
 
 configurations {
     compileOnly {
@@ -55,6 +65,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
+    // MinIO S3 Client
+    implementation("io.minio:minio:8.6.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -63,10 +76,6 @@ dependencyManagement {
     imports {
         mavenBom("org.springframework.ai:spring-ai-bom:$springAiVersion")
     }
-}
-
-tasks.withType<BootRun> {
-    standardInput = System.`in`
 }
 
 tasks.withType<Test> {
