@@ -23,24 +23,26 @@ public class AiClient {
     public String chat(UUID chatId, String userMessage, boolean isPromptIncluded) {
         Chat chat = chatRepository.findChatById(chatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat not found with id:" + chatId));
-        String prompt = chat.getPrompt() != null ? promptBeautify(chat.getPrompt().getContent()) : "";
+        String defaultPrompt = "Style: Text strictly in Markdown";
+        String prompt = chat.getPrompt() != null ?
+                promptBeautify(chat.getPrompt().getContent(), defaultPrompt, isPromptIncluded) : defaultPrompt;
 
         var promptRequest = chatClient.prompt()
                 .user(userMessage)
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId.toString()));
-        if (!prompt.isBlank() || isPromptIncluded) {
-            promptRequest = promptRequest.system(prompt);
-        }
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId.toString()))
+                .system(prompt);
 
         return promptRequest
                 .call()
                 .content();
     }
 
-    private String promptBeautify(Map<String, String> prompt) {
-        if (prompt == null || prompt.isEmpty()) {
-            return "";
+    private String promptBeautify(Map<String, String> prompt, String defaultPrompt, boolean isPromptIncluded) {
+        if (prompt == null || prompt.isEmpty() || !isPromptIncluded) {
+            return defaultPrompt;
         }
+
+        prompt.put("Style", "Text strictly in Markdown");
 
         return prompt.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())
