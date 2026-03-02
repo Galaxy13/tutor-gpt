@@ -31,12 +31,26 @@ spring:
     command:
       script:
         enabled: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
 
 minio:
   endpoint: http://localhost:9000
   access-key: minioadmin
   secret-key: minioadmin123
   bucket: chat-images
+
+management:
+  endpoints:
+    jmx:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
 
 jwt:
   secret: N4aQn+nsjtQ05/O0ca5BkUOx6mebpTOc7AVUbVSLAW4=
