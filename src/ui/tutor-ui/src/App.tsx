@@ -31,7 +31,6 @@ export default function App() {
     const [allChats, setAllChats] = createSignal<Chat[]>([]);
     const [selectedAdminChatId, setSelectedAdminChatId] = createSignal('');
     const [adminMessages, setAdminMessages] = createSignal<Message[]>([]);
-    const [adminDraft, setAdminDraft] = createSignal('');
     const [prompts, setPrompts] = createSignal<Prompt[]>([]);
     const [promptParts, setPromptParts] = createSignal<Array<{ key: string; value: string }>>([
         { key: 'role', value: '' },

@@ -38,6 +38,10 @@ export const ChatApi = {
         api<Message[]>(`/chat_info/messages/${chatId}`, 'GET', undefined, token),
     sendMessage: (chatId: string, message: string, token: string) =>
         api<Message>(`/message/${chatId}`, 'POST', { message }, token),
+
+    sendMessageWithImage: (chatId: string, message: string, image: File, token: string, withPrompt: boolean) =>
+        api<Message>(`/message/image/${chatId}?withPrompt=${withPrompt}`,
+            'POST', {message: message, image: image}, token),
 };
 
 export const AdminApi = {
