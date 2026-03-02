@@ -14,7 +14,7 @@ public class ChatDtoConverter implements Converter<Chat, ChatDto> {
                 .name(source.getName())
                 .createdAt(source.getCreatedAt())
                 .promptVersion(source.getPrompt() != null ? source.getPrompt().getId() : null)
-                .userName(source.getUser().getUsername())
+                .username(source.getUser().getUsername())
                 .build();
     }
 }

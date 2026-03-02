@@ -59,11 +59,14 @@ public class AdminChatController {
     }
 
     @PostMapping("/messages/{chat_id}")
-    @Operation(description = "Send message to AI agent without prompt (only admin)")
-    public ResponseEntity<MessageDto> sendMessageWithoutPrompt(@AuthenticationPrincipal UserPrincipal principal,
-                                                               @PathVariable(name = "chat_id") UUID chatId,
-                                                               @Valid @RequestBody MessageDto.MessageRequest request) {
-        MessageDto message = messageService.sendMessageWithoutPrompt(chatId, request, principal);
+    @Operation(description = "Send message to AI agent (admin). Use withPrompt param to control prompt inclusion.")
+    public ResponseEntity<MessageDto> sendAdminMessage(@AuthenticationPrincipal UserPrincipal principal,
+                                                       @PathVariable(name = "chat_id") UUID chatId,
+                                                       @Valid @RequestBody MessageDto.MessageRequest request,
+                                                       @RequestParam(defaultValue = "true") boolean withPrompt) {
+        MessageDto message = withPrompt
+                ? messageService.sendMessage(chatId, request, principal)
+                : messageService.sendMessageWithoutPrompt(chatId, request, principal);
         return ResponseEntity.ok(message);
     }
 

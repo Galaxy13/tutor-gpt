@@ -65,6 +65,6 @@ export const AdminApi = {
     createChat: (payload: {message: string, name: string}, token: string, withPrompt = true) =>
         api<Chat>(`/admin/chats?withPrompt=${withPrompt}`, 'POST', payload, token),
 
-    sendMessage: (chatId: string, message: string, token: string) =>
-        api<Message>(`/admin/chats/messages/${chatId}`, 'POST', { message }, token),
+    sendMessage: (chatId: string, message: string, token: string, withPrompt = true) =>
+        api<Message>(`/admin/chats/messages/${chatId}?withPrompt=${withPrompt}`, 'POST', { message }, token),
 };

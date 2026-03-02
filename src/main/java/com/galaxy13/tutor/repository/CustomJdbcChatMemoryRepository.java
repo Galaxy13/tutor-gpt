@@ -6,6 +6,7 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,11 +39,16 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
     }
 
     @Override
+    @Transactional
     public void saveAll(String conversationId, List<Message> messages) {
+        UUID convId = UUID.fromString(conversationId);
+        chatMessageRepository.deleteByConversationId(convId);
+        chatMessageRepository.flush();
+
         List<ChatMessage> entities = messages.stream()
                 .map(m -> {
                     ChatMessage entity = new ChatMessage();
-                    entity.setConversationId(UUID.fromString(conversationId));
+                    entity.setConversationId(convId);
                     entity.setContent(m.getText());
                     entity.setType(ChatMessage.MessageType.valueOf(m.getMessageType().name()));
                     entity.setTimestamp(LocalDateTime.now());
@@ -52,6 +58,7 @@ public class CustomJdbcChatMemoryRepository implements ChatMemoryRepository {
     }
 
     @Override
+    @Transactional
     public void deleteByConversationId(String conversationId) {
         chatMessageRepository.deleteByConversationId(UUID.fromString(conversationId));
     }
