@@ -6,17 +6,9 @@ import com.galaxy13.tutor.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.content.Media;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeType;
-import org.springframework.util.MimeTypeUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,7 +33,7 @@ public class AiClient {
 
 
         var promptRequest = chatClient.prompt()
-                .user(u -> u.text(message)
+                .user(u -> u.text(message == null ? "" : message)
                         .media(media))
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId.toString()))
                 .system(prompt);

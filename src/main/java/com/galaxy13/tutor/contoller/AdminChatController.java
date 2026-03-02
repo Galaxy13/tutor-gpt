@@ -10,9 +10,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -67,6 +69,21 @@ public class AdminChatController {
         MessageDto message = withPrompt
                 ? messageService.sendMessage(chatId, request, principal)
                 : messageService.sendMessageWithoutPrompt(chatId, request, principal);
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping(
+            value = "/messages/image/{chat_id}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @Operation(description = "Send message with image to AI agent (admin). Use withPrompt param to control prompt inclusion.")
+    public ResponseEntity<MessageDto> sendAdminMessageWithImage(@AuthenticationPrincipal UserPrincipal principal,
+                                                                @PathVariable(name = "chat_id") UUID chatId,
+                                                                @RequestPart("image") MultipartFile image,
+                                                                @RequestPart("request") MessageDto.MessageRequest request,
+                                                                @RequestParam(defaultValue = "true") boolean withPrompt) {
+        MessageDto message = messageService.sendMessageWithImage(chatId, request, principal, withPrompt, image);
         return ResponseEntity.ok(message);
     }
 

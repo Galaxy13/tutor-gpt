@@ -55,7 +55,12 @@ export default function AdminPanel(props: {
     myChatDraft: Accessor<string>;
     setMyChatDraft: (v: string) => void;
     onSendMyChatMessage: () => void;
+
+    onSelectMyChatImage: (file: File | null) => void;
+    selectedMyChatImageName: Accessor<string | null>;
 }) {
+    let myChatImageInputRef: HTMLInputElement | undefined;
+
     const handleMyChatKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -278,7 +283,21 @@ export default function AdminPanel(props: {
                                         onKeyDown={handleMyChatKeyDown}
                                         placeholder="Напишите сообщение..."
                                     />
-                                    <button onClick={props.onSendMyChatMessage}>Отправить</button>
+                                    <input
+                                        ref={myChatImageInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        style="display:none"
+                                        onChange={(e) => props.onSelectMyChatImage(e.currentTarget.files?.[0] ?? null)}
+                                    />
+
+                                    <div class="compose-actions">
+                                        <button class="btn-secondary" onClick={() => myChatImageInputRef?.click()}>+ Изображение</button>
+                                        <Show when={props.selectedMyChatImageName()}>
+                                            <small>Файл: {props.selectedMyChatImageName()}</small>
+                                        </Show>
+                                        <button onClick={props.onSendMyChatMessage}>Отправить</button>
+                                    </div>
                                 </div>
                             </Show>
                         </div>

@@ -85,7 +85,7 @@ public class TutorMessageService implements MessageService {
                                            boolean withPrompt, MultipartFile image){
         Chat chat = getChatAndValidateAccess(chatId, principal);
 
-        if (!withPrompt && !chat.getUser().getRole().equals(Role.ADMIN)) {
+        if (!withPrompt && !principal.getRole().equals(Role.ADMIN)) {
             throw new NotEnoughRightsException("User has no right to send promptless message");
         }
 
