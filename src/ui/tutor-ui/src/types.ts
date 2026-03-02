@@ -23,6 +23,7 @@ export type Chat = {
     name: string;
     createdAt: string;
     promptVersion?: string;
+    username: string;
 };
 
 export type TempChat = {

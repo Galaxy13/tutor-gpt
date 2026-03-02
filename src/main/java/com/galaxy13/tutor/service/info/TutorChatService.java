@@ -1,6 +1,6 @@
 package com.galaxy13.tutor.service.info;
 
-import com.galaxy13.tutor.converter.ChatResponseConverter;
+import com.galaxy13.tutor.converter.ChatDtoConverter;
 import com.galaxy13.tutor.dto.ChatCreateRequest;
 import com.galaxy13.tutor.dto.ChatDto;
 import com.galaxy13.tutor.exception.ResourceNotFoundException;
@@ -22,7 +22,7 @@ public class TutorChatService implements ChatService {
 
     private final ChatRepository chatRepository;
 
-    private final ChatResponseConverter chatConverter;
+    private final ChatDtoConverter chatConverter;
 
     private final UserRepository userRepository;
 

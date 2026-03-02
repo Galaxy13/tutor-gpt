@@ -6,7 +6,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ChatResponseConverter implements Converter<Chat, ChatDto> {
+public class ChatDtoConverter implements Converter<Chat, ChatDto> {
     @Override
     public ChatDto convert(Chat source) {
         return ChatDto.builder()
@@ -14,6 +14,7 @@ public class ChatResponseConverter implements Converter<Chat, ChatDto> {
                 .name(source.getName())
                 .createdAt(source.getCreatedAt())
                 .promptVersion(source.getPrompt() != null ? source.getPrompt().getId() : null)
+                .userName(source.getUser().getUsername())
                 .build();
     }
 }

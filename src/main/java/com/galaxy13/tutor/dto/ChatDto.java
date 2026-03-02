@@ -9,5 +9,6 @@ import java.util.UUID;
 public record ChatDto(UUID id,
                       String name,
                       LocalDateTime createdAt,
-                      Long promptVersion) {
+                      Long promptVersion,
+                      String userName) {
 }

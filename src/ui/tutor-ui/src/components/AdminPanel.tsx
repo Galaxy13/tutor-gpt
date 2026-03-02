@@ -312,6 +312,7 @@ export default function AdminPanel(props: {
                                                 >
                                                     <strong>{c.name || "Без названия"}</strong>
                                                     <small>{new Date(c.createdAt).toLocaleDateString()}</small>
+                                                    <small>{c.username}</small>
                                                 </button>
                                             )}
                                         </For>
