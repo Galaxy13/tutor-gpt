@@ -1,7 +1,7 @@
 import { Show, createMemo, createSignal } from 'solid-js';
 import './styles.css';
 
-import type { AdminTab, AnyChat, AuthResponse, Chat, Message, Prompt, TempChat, User } from './types';
+import type { AdminTab, AuthResponse, Chat, Message, Prompt, User } from './types';
 import type { UserForm } from './types';
 
 import { AdminApi, AuthApi, ChatApi, UserApi } from './api';
@@ -147,69 +147,57 @@ export default function App() {
         }
     };
 
-    const isTempChat = (c: AnyChat): c is TempChat => (c as any).__temp === true;
-
-    const makeTempChat = (name = "New chat"): TempChat => ({
-        id: `tmp-${crypto.randomUUID()}`,
-        name,
-        createdAt: new Date().toISOString(),
-        __temp: true,
-    });
-
-    const createUserChatLocal = (autoselect = true) => {
-        const temp = makeTempChat("Новый чат");
-        setChats((prev) => [temp as any, ...prev]);
+    const clearChat = (autoselect = true) => {
         if (autoselect) {
-            setActiveChat(temp as any);
+            setActiveChat(null);
             setMessages([]);
         }
     };
 
     const sendUserMessage = async () => {
         const text = draft().trim();
-
         const image = selectedUserImage();
         if (!text && !image) return;
 
-        let chat = activeChat();
-        if (!chat) {
-            createUserChatLocal(true);
-            chat = activeChat();
-            if (!chat) return;
-        }
+        const tokenValue = token();
+        if (!tokenValue) return; // optional safety
 
-        setMessages((prev) => [
-            ...prev,
-            {
-                content: text, type: "USER", chatId: chat!.id,
-                timestamp: new Date().toISOString(),
-                imageUrl: image ? URL.createObjectURL(image) : undefined,
-            },
-        ]);
+        const existingChat = activeChat();
+
+        const tempChatId = crypto.randomUUID();
+        let chatId = existingChat?.id ?? tempChatId;
+
+        const userMessage = {
+            content: text,
+            type: "USER" as const,
+            chatId,
+            timestamp: new Date().toISOString(),
+            imageUrl: image ? URL.createObjectURL(image) : undefined,
+        };
+
+        setMessages(prev => [...prev, userMessage]);
         setDraft("");
         setSelectedUserImage(null);
         setSending(true);
 
         try {
-            if (isTempChat(chat as any)) {
-                const created = await ChatApi.createMine({ message: text, name: "" }, token());
-                setChats((prev) => prev.map((c: any) => (c.id === chat!.id ? created : c)));
+            if (!existingChat) {
+                const created = await ChatApi.createMine({ message: text, name: "" }, tokenValue);
+
+                setChats(prev => [...prev, created]);
                 setActiveChat(created);
 
-                const reply = image
-                    ? await ChatApi.sendMessageWithImage(created.id, text, image, token(), true)
-                    : await ChatApi.sendMessage(created.id, text, token());
-                setMessages((prev) => [
-                    ...prev.map((m) => (m.chatId === chat!.id ? { ...m, chatId: created.id } : m)),
-                    reply,
-                ]);
-                return;
+                chatId = created.id;
+                setMessages(prev =>
+                    prev.map(m => (m.chatId === tempChatId ? { ...m, chatId: created.id } : m))
+                );
             }
 
             const reply = image
-                ? await ChatApi.sendMessageWithImage((chat as any).id, text, image, token(), true)
-                : await ChatApi.sendMessage((chat as any).id, text, token());
-            setMessages((prev) => [...prev, reply]);
+                ? await ChatApi.sendMessageWithImage(chatId, text, image, tokenValue, true)
+                : await ChatApi.sendMessage(chatId, text, tokenValue);
+
+            setMessages(prev => [...prev, reply]);
         } finally {
             setSending(false);
         }
@@ -487,7 +475,7 @@ export default function App() {
                                 messages={messages}
                                 selectedImageName={() => selectedUserImage()?.name ?? null}
                                 draft={draft}
-                                onNewChat={() => createUserChatLocal(true)}
+                                onNewChat={() => clearChat(true)}
                                 onOpenChat={openChat}
                                 setDraft={setDraft}
                                 onSend={sendUserMessage}

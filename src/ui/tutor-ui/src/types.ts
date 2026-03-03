@@ -26,15 +26,6 @@ export type Chat = {
     username: string;
 };
 
-export type TempChat = {
-    id: string;
-    name: string;
-    createdAt: string;
-    __temp: true;
-}
-
-export type AnyChat = Chat | TempChat;
-
 export type Message = {
     content: string;
     type: 'USER' | 'ASSISTANT' | 'SYSTEM' | 'TOOL';

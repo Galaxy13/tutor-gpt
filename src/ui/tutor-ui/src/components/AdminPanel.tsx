@@ -1,4 +1,4 @@
-import { Accessor, For, Show } from "solid-js";
+import {Accessor, For, Index, Show} from "solid-js";
 import { marked } from "marked";
 import type { AdminTab, Chat, Message, Prompt, User, UserForm } from "../types";
 import CreateUserModal from "./CreateUserModal";
@@ -357,32 +357,42 @@ export default function AdminPanel(props: {
                         <div class="prompt-form">
                             <h3>Создать новый промпт</h3>
 
-                            <For each={props.promptParts()}>
+                            <Index each={props.promptParts()}>
                                 {(part, idx) => (
                                     <div class="prompt-row">
                                         <input
                                             placeholder="Название секции"
-                                            value={part.key}
-                                            onInput={(e) => props.setPromptParts((prev) =>
-                                                prev.map((p, i) => (i === idx() ? { ...p, key: e.currentTarget.value } : p))
-                                            )}
+                                            value={part().key}
+                                            onInput={(e) =>
+                                                props.setPromptParts(prev =>
+                                                    prev.map((p, i) =>
+                                                        i === idx ? { ...p, key: e.currentTarget.value } : p
+                                                    )
+                                                )
+                                            }
                                         />
                                         <input
                                             placeholder="Содержание секции"
-                                            value={part.value}
-                                            onInput={(e) => props.setPromptParts((prev) =>
-                                                prev.map((p, i) => (i === idx() ? { ...p, value: e.currentTarget.value } : p))
-                                            )}
+                                            value={part().value}
+                                            onInput={(e) =>
+                                                props.setPromptParts(prev =>
+                                                    prev.map((p, i) =>
+                                                        i === idx ? { ...p, value: e.currentTarget.value } : p
+                                                    )
+                                                )
+                                            }
                                         />
                                         <button
                                             class="btn-ghost btn-sm"
-                                            onClick={() => props.setPromptParts((prev) => prev.filter((_, i) => i !== idx()))}
+                                            onClick={() =>
+                                                props.setPromptParts(prev => prev.filter((_, i) => i !== idx))
+                                            }
                                         >
                                             x
                                         </button>
                                     </div>
                                 )}
-                            </For>
+                            </Index>
 
                             <div class="prompt-form-actions">
                                 <button class="btn-secondary" onClick={() => props.setPromptParts((prev) => [...prev, { key: "", value: "" }])}>

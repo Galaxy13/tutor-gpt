@@ -40,16 +40,19 @@ export default function UserLayout(props: {
                     <button class="btn-sm" onClick={props.onNewChat}>+ Новый</button>
                 </div>
 
-                <For each={props.chats()}>
-                    {(chat) => (
-                        <button
-                            class={`sidebar-btn ${props.activeChat()?.id === chat.id ? "active" : ""}`}
-                            onClick={() => props.onOpenChat(chat)}>
-                            <strong>{chat.name || "Новый чат"}</strong>
-                            <small>{new Date(chat.createdAt).toLocaleString()}</small>
-                        </button>
-                    )}
-                </For>
+                <div class="sidebar-list">
+                    <For each={props.chats()}>
+                        {(chat) => (
+                            <button
+                                class={`sidebar-btn ${props.activeChat()?.id === chat.id ? "active" : ""}`}
+                                onClick={() => props.onOpenChat(chat)}
+                            >
+                                <strong>{chat.name || "Новый чат"}</strong>
+                                <small>{new Date(chat.createdAt).toLocaleString()}</small>
+                            </button>
+                        )}
+                    </For>
+                </div>
             </aside>
 
             <div class="chat-main">
@@ -57,10 +60,10 @@ export default function UserLayout(props: {
                     <Show when={!props.messagesLoading()} fallback={
                         <div class="loading-dots">
                             <span>Загрузка...</span>
-                            <div class="dots"><span /><span /><span /></div>
+                            <div class="dots"><span/><span/><span/></div>
                         </div>
                     }>
-                        <For each={props.messages()}>
+                    <For each={props.messages()}>
                             {(msg) => (
                                 <div class={`bubble ${msg.type === 'USER' ? 'user' : 'assistant'}`}>
                                     <Show when={msg.imageUrl}>
