@@ -19,6 +19,9 @@ export default function UserLayout(props: {
 
     selectedImageName: Accessor<string | null>;
     onSelectImage: (file: File | null) => void;
+
+    messagesLoading: Accessor<boolean>;
+    sending: Accessor<boolean>;
 }) {
     let imageInputRef: HTMLInputElement | undefined;
 
@@ -51,15 +54,35 @@ export default function UserLayout(props: {
 
             <div class="chat-main">
                 <div class="messages">
-                    <For each={props.messages()}>
-                        {(msg) => (
-                            <div class={`bubble ${msg.type === 'USER' ? 'user' : 'assistant'}`}>
-                                <Show when={msg.type === 'ASSISTANT'} fallback={<span>{msg.content}</span>}>
-                                    <div innerHTML={md(msg.content)}></div>
-                                </Show>
+                    <Show when={!props.messagesLoading()} fallback={
+                        <div class="loading-dots">
+                            <span>Загрузка...</span>
+                            <div class="dots"><span /><span /><span /></div>
+                        </div>
+                    }>
+                        <For each={props.messages()}>
+                            {(msg) => (
+                                <div class={`bubble ${msg.type === 'USER' ? 'user' : 'assistant'}`}>
+                                    <Show when={msg.imageUrl}>
+                                        <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
+                                            <img class="bubble-image" src={msg.imageUrl} alt="" />
+                                        </a>
+                                    </Show>
+                                    <Show when={msg.type === 'ASSISTANT'} fallback={
+                                        <Show when={msg.content}><span>{msg.content}</span></Show>
+                                    }>
+                                        <div innerHTML={md(msg.content)}></div>
+                                    </Show>
+                                </div>
+                            )}
+                        </For>
+                        <Show when={props.sending()}>
+                            <div class="typing-indicator">
+                                <span>Думает...</span>
+                                <div class="dots"><span /><span /><span /></div>
                             </div>
-                        )}
-                    </For>
+                        </Show>
+                    </Show>
                 </div>
 
                 <div class="compose">

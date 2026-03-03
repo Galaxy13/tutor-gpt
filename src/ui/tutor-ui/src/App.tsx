@@ -24,6 +24,10 @@ export default function App() {
 
     const [selectedUserImage, setSelectedUserImage] = createSignal<File | null>(null);
 
+    const [messagesLoading, setMessagesLoading] = createSignal(false);
+    const [sending, setSending] = createSignal(false);
+    const [myChatSending, setMyChatSending] = createSignal(false);
+
     const [showProfile, setShowProfile] = createSignal(false);
     const [profileContact, setProfileContact] = createSignal('');
     const [passwords, setPasswords] = createSignal({ currentPassword: '', newPassword: '' });
@@ -106,6 +110,9 @@ export default function App() {
         setUserChats([]);
         setSelectedUserChatId('');
         setUserChatMessages([]);
+        setMessagesLoading(false);
+        setSending(false);
+        setMyChatSending(false);
     };
 
     // ---- USER FLOW ----
@@ -131,8 +138,13 @@ export default function App() {
     const openChat = async (chat: Chat, tk = token()) => {
         setSelectedUserImage(null);
         setActiveChat(chat);
-        const result = await ChatApi.messagesMine(chat.id, tk);
-        setMessages(result);
+        setMessagesLoading(true);
+        try {
+            const result = await ChatApi.messagesMine(chat.id, tk);
+            setMessages(result);
+        } finally {
+            setMessagesLoading(false);
+        }
     };
 
     const isTempChat = (c: AnyChat): c is TempChat => (c as any).__temp === true;
@@ -168,30 +180,39 @@ export default function App() {
 
         setMessages((prev) => [
             ...prev,
-            { content: text, type: "USER", chatId: chat!.id, timestamp: new Date().toISOString() },
+            {
+                content: text, type: "USER", chatId: chat!.id,
+                timestamp: new Date().toISOString(),
+                imageUrl: image ? URL.createObjectURL(image) : undefined,
+            },
         ]);
         setDraft("");
         setSelectedUserImage(null);
+        setSending(true);
 
-        if (isTempChat(chat as any)) {
-            const created = await ChatApi.createMine({ message: text, name: "" }, token());
-            setChats((prev) => prev.map((c: any) => (c.id === chat!.id ? created : c)));
-            setActiveChat(created);
+        try {
+            if (isTempChat(chat as any)) {
+                const created = await ChatApi.createMine({ message: text, name: "" }, token());
+                setChats((prev) => prev.map((c: any) => (c.id === chat!.id ? created : c)));
+                setActiveChat(created);
+
+                const reply = image
+                    ? await ChatApi.sendMessageWithImage(created.id, text, image, token(), true)
+                    : await ChatApi.sendMessage(created.id, text, token());
+                setMessages((prev) => [
+                    ...prev.map((m) => (m.chatId === chat!.id ? { ...m, chatId: created.id } : m)),
+                    reply,
+                ]);
+                return;
+            }
 
             const reply = image
-                ? await ChatApi.sendMessageWithImage(created.id, text, image, token(), true)
-                : await ChatApi.sendMessage(created.id, text, token());
-            setMessages((prev) => [
-                ...prev.map((m) => (m.chatId === chat!.id ? { ...m, chatId: created.id } : m)),
-                reply,
-            ]);
-            return;
+                ? await ChatApi.sendMessageWithImage((chat as any).id, text, image, token(), true)
+                : await ChatApi.sendMessage((chat as any).id, text, token());
+            setMessages((prev) => [...prev, reply]);
+        } finally {
+            setSending(false);
         }
-
-        const reply = image
-            ? await ChatApi.sendMessageWithImage((chat as any).id, text, image, token(), true)
-            : await ChatApi.sendMessage((chat as any).id, text, token());
-        setMessages((prev) => [...prev, reply]);
     };
 
     // ---- PROFILE ----
@@ -285,8 +306,13 @@ export default function App() {
 
     const openAdminChat = async (chatId: string) => {
         setSelectedAdminChatId(chatId);
-        const result = await AdminApi.chatMessages(chatId, token());
-        setAdminMessages(result);
+        setMessagesLoading(true);
+        try {
+            const result = await AdminApi.chatMessages(chatId, token());
+            setAdminMessages(result);
+        } finally {
+            setMessagesLoading(false);
+        }
     };
 
     const createAdminChat = async () => {
@@ -322,8 +348,13 @@ export default function App() {
     const openMyChat = async (chatId: string) => {
         setSelectedMyChatImage(null);
         setSelectedMyChatId(chatId);
-        const msgs = await AdminApi.chatMessages(chatId, token());
-        setMyChatMessages(msgs);
+        setMessagesLoading(true);
+        try {
+            const msgs = await AdminApi.chatMessages(chatId, token());
+            setMyChatMessages(msgs);
+        } finally {
+            setMessagesLoading(false);
+        }
     };
 
     const sendMyChatMessage = async () => {
@@ -333,15 +364,24 @@ export default function App() {
 
         setMyChatMessages((prev) => [
             ...prev,
-            { content: text, type: 'USER', chatId: selectedMyChatId(), timestamp: new Date().toISOString() },
+            {
+                content: text, type: 'USER', chatId: selectedMyChatId(),
+                timestamp: new Date().toISOString(),
+                imageUrl: image ? URL.createObjectURL(image) : undefined,
+            },
         ]);
         setMyChatDraft('');
         setSelectedMyChatImage(null);
+        setMyChatSending(true);
 
-        const reply = image
-            ? await AdminApi.sendMessageWithImage(selectedMyChatId(), text, image, token(), true)
-            : await AdminApi.sendMessage(selectedMyChatId(), text, token(), true);
-        setMyChatMessages((prev) => [...prev, reply]);
+        try {
+            const reply = image
+                ? await AdminApi.sendMessageWithImage(selectedMyChatId(), text, image, token(), true)
+                : await AdminApi.sendMessage(selectedMyChatId(), text, token(), true);
+            setMyChatMessages((prev) => [...prev, reply]);
+        } finally {
+            setMyChatSending(false);
+        }
     };
 
     // -- View User Chats --
@@ -361,8 +401,13 @@ export default function App() {
 
     const openUserChat = async (chatId: string) => {
         setSelectedUserChatId(chatId);
-        const msgs = await AdminApi.chatMessages(chatId, token());
-        setUserChatMessages(msgs);
+        setMessagesLoading(true);
+        try {
+            const msgs = await AdminApi.chatMessages(chatId, token());
+            setUserChatMessages(msgs);
+        } finally {
+            setMessagesLoading(false);
+        }
     };
 
     return (
@@ -431,6 +476,8 @@ export default function App() {
                                     onSendMyChatMessage={sendMyChatMessage}
                                     onSelectMyChatImage={setSelectedMyChatImage}
                                     selectedMyChatImageName={() => selectedMyChatImage()?.name ?? null}
+                                    messagesLoading={messagesLoading}
+                                    myChatSending={myChatSending}
                                 />
                             }
                         >
@@ -445,6 +492,8 @@ export default function App() {
                                 setDraft={setDraft}
                                 onSend={sendUserMessage}
                                 onSelectImage={setSelectedUserImage}
+                                messagesLoading={messagesLoading}
+                                sending={sending}
                             />
                         </Show>
 
