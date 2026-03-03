@@ -63,7 +63,15 @@ export default function UserLayout(props: {
                             <div class="dots"><span/><span/><span/></div>
                         </div>
                     }>
-                    <For each={props.messages()}>
+                    <Show when={props.messages().length > 0} fallback={
+                        <Show when={!props.sending()}>
+                            <div class="empty-chat-placeholder">
+                                <span class="placeholder-text">Напишите сообщение, чтобы начать...</span>
+                                <div class="placeholder-dots"><span /><span /><span /></div>
+                            </div>
+                        </Show>
+                    }>
+                        <For each={props.messages()}>
                             {(msg) => (
                                 <div class={`bubble ${msg.type === 'USER' ? 'user' : 'assistant'}`}>
                                     <Show when={msg.imageUrl}>
@@ -79,6 +87,7 @@ export default function UserLayout(props: {
                                 </div>
                             )}
                         </For>
+                    </Show>
                         <Show when={props.sending()}>
                             <div class="typing-indicator">
                                 <span>Думает...</span>

@@ -10,9 +10,25 @@ import AuthCard from './components/AuthCard';
 import MainLayout from './components/MainLayout';
 import UserLayout from './components/UserLayout';
 import AdminPanel from './components/AdminPanel';
+import AdminChatWindow from './components/AdminChatWindow';
 import ProfileModal from './components/ProfileModal';
 
 export default function App() {
+    // ---- HASH-BASED ADMIN CHAT WINDOW ----
+    const hash = window.location.hash;
+    if (hash === '#admin-chat-prompt' || hash === '#admin-chat-promptless') {
+        const stored = localStorage.getItem('tutor_auth');
+        if (!stored) {
+            return <div class="auth-wrapper"><div class="auth-card"><h1>Сессия истекла</h1><p>Закройте окно и войдите снова.</p></div></div>;
+        }
+        const authData: AuthResponse = JSON.parse(stored);
+        const withPrompt = hash === '#admin-chat-prompt';
+        return (
+            <div class="app">
+                <AdminChatWindow auth={authData} withPrompt={withPrompt} />
+            </div>
+        );
+    }
     const [auth, setAuth] = createSignal<AuthResponse | null>(null);
     const [login, setLogin] = createSignal({ username: '', password: '' });
     const [error, setError] = createSignal('');
@@ -80,6 +96,7 @@ export default function App() {
         try {
             const data = await AuthApi.login(login());
             setAuth(data);
+            localStorage.setItem('tutor_auth', JSON.stringify(data));
             setProfileContact(data.user.contact ?? '');
 
             if (data.user.role === 'USER') await loadUserChats(data.token);
@@ -91,6 +108,7 @@ export default function App() {
 
     const logout = () => {
         setAuth(null);
+        localStorage.removeItem('tutor_auth');
         setChats([]);
         setMessages([]);
         setActiveChat(null);
@@ -303,20 +321,10 @@ export default function App() {
         }
     };
 
-    const createAdminChat = async () => {
-        const created = await AdminApi.createChat({ name: 'Новый чат', message: '' }, token(), true);
-        setMyChats((prev) => [created, ...prev]);
-        setAdminTab('my_chats');
-        setSelectedMyChatId(created.id);
-        setMyChatMessages([]);
-    };
-
-    const createAdminPromptlessChat = async () => {
-        const created = await AdminApi.createChat({ name: 'Чат без промпта', message: '' }, token(), false);
-        setMyChats((prev) => [created, ...prev]);
-        setAdminTab('my_chats');
-        setSelectedMyChatId(created.id);
-        setMyChatMessages([]);
+    const openAdminChatWindow = (withPrompt: boolean) => {
+        const hashVal = withPrompt ? 'admin-chat-prompt' : 'admin-chat-promptless';
+        const url = `${window.location.origin}${window.location.pathname}#${hashVal}`;
+        window.open(url, `admin-chat-${hashVal}`, 'width=1200,height=800');
     };
 
     // -- My Chats (admin's own chats) --
@@ -432,8 +440,7 @@ export default function App() {
 
                                     onOpenAdminChat={openAdminChat}
                                     onCreatePrompt={createPrompt}
-                                    onCreateChat={createAdminChat}
-                                    onCreatePromptlessChat={createAdminPromptlessChat}
+                                    onOpenAdminChatWindow={openAdminChatWindow}
 
                                     showCreateUserModal={showCreateUserModal}
                                     setShowCreateUserModal={setShowCreateUserModal}

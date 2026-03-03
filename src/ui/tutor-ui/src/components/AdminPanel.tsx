@@ -25,8 +25,7 @@ export default function AdminPanel(props: {
 
     onOpenAdminChat: (chatId: string) => void;
     onCreatePrompt: () => void;
-    onCreateChat: () => void;
-    onCreatePromptlessChat: () => void;
+    onOpenAdminChatWindow: (withPrompt: boolean) => void;
 
     showCreateUserModal: Accessor<boolean>;
     setShowCreateUserModal: (v: boolean) => void;
@@ -115,19 +114,12 @@ export default function AdminPanel(props: {
                 <div class="nav-divider" />
                 <div class="nav-label">Действия</div>
 
-                <button
-                    class={`nav-action ${props.adminTab() === "my_chats" ? "active" : ""}`}
-                    onClick={props.onOpenMyChatsTab}
-                >
-                    Мои чаты
+                <button class="nav-action" onClick={() => props.onOpenAdminChatWindow(true)}>
+                    Чаты с промптом
                 </button>
 
-                <button class="nav-action" onClick={props.onCreateChat}>
-                    + Создать чат
-                </button>
-
-                <button class="nav-action" onClick={props.onCreatePromptlessChat}>
-                    + Чат без промпта
+                <button class="nav-action" onClick={() => props.onOpenAdminChatWindow(false)}>
+                    Чаты без промпта
                 </button>
             </nav>
 
