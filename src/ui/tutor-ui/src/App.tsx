@@ -178,7 +178,7 @@ export default function App() {
         if (!text && !image) return;
 
         const tokenValue = token();
-        if (!tokenValue) return; // optional safety
+        if (!tokenValue) return;
 
         const existingChat = activeChat();
 

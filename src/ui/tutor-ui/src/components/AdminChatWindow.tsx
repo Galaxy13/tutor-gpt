@@ -45,35 +45,48 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
         }
     };
 
-    const createChat = async () => {
-        const name = props.withPrompt ? 'Новый чат' : 'Чат без промпта';
-        const created = await AdminApi.createChat({ name, message: '' }, token(), props.withPrompt);
-        setChats(prev => [created, ...prev]);
-        setSelectedChatId(created.id);
+    const clearChat = async () => {
+        setSelectedImage(null);
+        setSelectedChatId('');
         setMessages([]);
-    };
-
+    }
     const sendMessage = async () => {
         const text = draft().trim();
         const image = selectedImage();
         if (!text && !image) return;
-        if (!selectedChatId()) return;
 
-        setMessages(prev => [
-            ...prev,
-            {
-                content: text,
-                type: 'USER' as const,
-                chatId: selectedChatId(),
-                timestamp: new Date().toISOString(),
-                imageUrl: image ? URL.createObjectURL(image) : undefined,
-            },
-        ]);
+        const tokenValue = token();
+        if (!tokenValue) return;
+
+        const existingChatId = selectedChatId();
+
+        const tempChatId = crypto.randomUUID();
+        let chatId = existingChatId ?? tempChatId;
+
+        const adminMessage = {
+            content: text,
+            type: "USER" as const,
+            chatId,
+            timestamp: new Date().toISOString(),
+            imageUrl: image ? URL.createObjectURL(image) : undefined,
+        };
+
+        setMessages(prev => [...prev, adminMessage]);
         setDraft('');
         setSelectedImage(null);
         setSending(true);
 
         try {
+            if (existingChatId === '') {
+                const created = await AdminApi.createChat({message: text, name: ""}, tokenValue, props.withPrompt);
+
+                setChats(prev => [...prev, created]);
+                setSelectedChatId(created.id);
+
+                setMessages(prev =>
+                    prev.map(m => (m.chatId === tempChatId ? { ... m, chatId: created.id} : m))
+                );
+            }
             const reply = image
                 ? await AdminApi.sendMessageWithImage(selectedChatId(), text, image, token(), props.withPrompt)
                 : await AdminApi.sendMessage(selectedChatId(), text, token(), props.withPrompt);
@@ -95,7 +108,7 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
             <aside class="chat-sidebar">
                 <div class="sidebar-header">
                     <h3>{props.withPrompt ? 'С промптом' : 'Без промпта'}</h3>
-                    <button class="btn-sm" onClick={createChat}>+ Новый</button>
+                    <button class="btn-sm" onClick={clearChat}>+ Новый</button>
                 </div>
 
                 <div class="sidebar-list">
@@ -127,14 +140,12 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
                         <Show when={selectedChatId()} fallback={
                             <div class="empty-chat-placeholder">
                                 <span class="placeholder-text">Выберите чат или создайте новый</span>
-                                <div class="placeholder-dots"><span /><span /><span /></div>
                             </div>
                         }>
                             <Show when={messages().length > 0} fallback={
                                 <Show when={!sending()}>
                                     <div class="empty-chat-placeholder">
                                         <span class="placeholder-text">Напишите сообщение, чтобы начать...</span>
-                                        <div class="placeholder-dots"><span /><span /><span /></div>
                                     </div>
                                 </Show>
                             }>
@@ -165,7 +176,7 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
                     </Show>
                 </div>
 
-                <Show when={selectedChatId()}>
+                <Show when={true}>
                     <div class="compose">
                         <textarea
                             value={draft()}
