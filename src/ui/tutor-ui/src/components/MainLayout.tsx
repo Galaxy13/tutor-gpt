@@ -20,11 +20,15 @@ export default function MainLayout(props: {
                     <div class="avatar">{initials()}</div>
                     <div>
                         <div class="user-name">{props.auth.user.name} {props.auth.user.surname}</div>
-                        <div class="user-role">{props.auth.user.role}</div>
+                        <div class="user-role">
+                            {props.auth.user.role === "ADMIN"
+                                ? "Администратор"
+                                : "Пользователь"}
+                        </div>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-secondary" onClick={props.onOpenProfile}>Профиль</button>
+                <button class="btn-secondary" onClick={props.onOpenProfile}>Профиль</button>
                     <button class="btn-ghost" onClick={props.onLogout}>Выйти</button>
                 </div>
             </header>

@@ -1,7 +1,7 @@
 import { Show, createMemo, createSignal } from 'solid-js';
 import './styles.css';
 
-import type { AdminTab, AnyChat, AuthResponse, Chat, Message, Prompt, TempChat, User } from './types';
+import type { AdminTab, AuthResponse, Chat, Message, Prompt, User } from './types';
 import type { UserForm } from './types';
 
 import { AdminApi, AuthApi, ChatApi, UserApi } from './api';
@@ -10,9 +10,25 @@ import AuthCard from './components/AuthCard';
 import MainLayout from './components/MainLayout';
 import UserLayout from './components/UserLayout';
 import AdminPanel from './components/AdminPanel';
+import AdminChatWindow from './components/AdminChatWindow';
 import ProfileModal from './components/ProfileModal';
 
 export default function App() {
+    // ---- HASH-BASED ADMIN CHAT WINDOW ----
+    const hash = window.location.hash;
+    if (hash === '#admin-chat-prompt' || hash === '#admin-chat-promptless') {
+        const stored = localStorage.getItem('tutor_auth');
+        if (!stored) {
+            return <div class="auth-wrapper"><div class="auth-card"><h1>Сессия истекла</h1><p>Закройте окно и войдите снова.</p></div></div>;
+        }
+        const authData: AuthResponse = JSON.parse(stored);
+        const withPrompt = hash === '#admin-chat-prompt';
+        return (
+            <div class="app">
+                <AdminChatWindow auth={authData} withPrompt={withPrompt} />
+            </div>
+        );
+    }
     const [auth, setAuth] = createSignal<AuthResponse | null>(null);
     const [login, setLogin] = createSignal({ username: '', password: '' });
     const [error, setError] = createSignal('');
@@ -80,6 +96,7 @@ export default function App() {
         try {
             const data = await AuthApi.login(login());
             setAuth(data);
+            localStorage.setItem('tutor_auth', JSON.stringify(data));
             setProfileContact(data.user.contact ?? '');
 
             if (data.user.role === 'USER') await loadUserChats(data.token);
@@ -91,6 +108,7 @@ export default function App() {
 
     const logout = () => {
         setAuth(null);
+        localStorage.removeItem('tutor_auth');
         setChats([]);
         setMessages([]);
         setActiveChat(null);
@@ -147,69 +165,57 @@ export default function App() {
         }
     };
 
-    const isTempChat = (c: AnyChat): c is TempChat => (c as any).__temp === true;
-
-    const makeTempChat = (name = "New chat"): TempChat => ({
-        id: `tmp-${crypto.randomUUID()}`,
-        name,
-        createdAt: new Date().toISOString(),
-        __temp: true,
-    });
-
-    const createUserChatLocal = (autoselect = true) => {
-        const temp = makeTempChat("Новый чат");
-        setChats((prev) => [temp as any, ...prev]);
+    const clearChat = (autoselect = true) => {
         if (autoselect) {
-            setActiveChat(temp as any);
+            setActiveChat(null);
             setMessages([]);
         }
     };
 
     const sendUserMessage = async () => {
         const text = draft().trim();
-
         const image = selectedUserImage();
         if (!text && !image) return;
 
-        let chat = activeChat();
-        if (!chat) {
-            createUserChatLocal(true);
-            chat = activeChat();
-            if (!chat) return;
-        }
+        const tokenValue = token();
+        if (!tokenValue) return;
 
-        setMessages((prev) => [
-            ...prev,
-            {
-                content: text, type: "USER", chatId: chat!.id,
-                timestamp: new Date().toISOString(),
-                imageUrl: image ? URL.createObjectURL(image) : undefined,
-            },
-        ]);
+        const existingChat = activeChat();
+
+        const tempChatId = crypto.randomUUID();
+        let chatId = existingChat?.id ?? tempChatId;
+
+        const userMessage = {
+            content: text,
+            type: "USER" as const,
+            chatId,
+            timestamp: new Date().toISOString(),
+            imageUrl: image ? URL.createObjectURL(image) : undefined,
+        };
+
+        setMessages(prev => [...prev, userMessage]);
         setDraft("");
         setSelectedUserImage(null);
         setSending(true);
 
         try {
-            if (isTempChat(chat as any)) {
-                const created = await ChatApi.createMine({ message: text, name: "" }, token());
-                setChats((prev) => prev.map((c: any) => (c.id === chat!.id ? created : c)));
+            if (!existingChat) {
+                const created = await ChatApi.createMine({ message: text, name: "" }, tokenValue);
+
+                setChats(prev => [...prev, created]);
                 setActiveChat(created);
 
-                const reply = image
-                    ? await ChatApi.sendMessageWithImage(created.id, text, image, token(), true)
-                    : await ChatApi.sendMessage(created.id, text, token());
-                setMessages((prev) => [
-                    ...prev.map((m) => (m.chatId === chat!.id ? { ...m, chatId: created.id } : m)),
-                    reply,
-                ]);
-                return;
+                chatId = created.id;
+                setMessages(prev =>
+                    prev.map(m => (m.chatId === tempChatId ? { ...m, chatId: created.id } : m))
+                );
             }
 
             const reply = image
-                ? await ChatApi.sendMessageWithImage((chat as any).id, text, image, token(), true)
-                : await ChatApi.sendMessage((chat as any).id, text, token());
-            setMessages((prev) => [...prev, reply]);
+                ? await ChatApi.sendMessageWithImage(chatId, text, image, tokenValue, true)
+                : await ChatApi.sendMessage(chatId, text, tokenValue);
+
+            setMessages(prev => [...prev, reply]);
         } finally {
             setSending(false);
         }
@@ -315,20 +321,10 @@ export default function App() {
         }
     };
 
-    const createAdminChat = async () => {
-        const created = await AdminApi.createChat({ name: 'Новый чат', message: '' }, token(), true);
-        setMyChats((prev) => [created, ...prev]);
-        setAdminTab('my_chats');
-        setSelectedMyChatId(created.id);
-        setMyChatMessages([]);
-    };
-
-    const createAdminPromptlessChat = async () => {
-        const created = await AdminApi.createChat({ name: 'Чат без промпта', message: '' }, token(), false);
-        setMyChats((prev) => [created, ...prev]);
-        setAdminTab('my_chats');
-        setSelectedMyChatId(created.id);
-        setMyChatMessages([]);
+    const openAdminChatWindow = (withPrompt: boolean) => {
+        const hashVal = withPrompt ? 'admin-chat-prompt' : 'admin-chat-promptless';
+        const url = `${window.location.origin}${window.location.pathname}#${hashVal}`;
+        window.open(url, `admin-chat-${hashVal}`, 'width=1200,height=800');
     };
 
     // -- My Chats (admin's own chats) --
@@ -444,8 +440,7 @@ export default function App() {
 
                                     onOpenAdminChat={openAdminChat}
                                     onCreatePrompt={createPrompt}
-                                    onCreateChat={createAdminChat}
-                                    onCreatePromptlessChat={createAdminPromptlessChat}
+                                    onOpenAdminChatWindow={openAdminChatWindow}
 
                                     showCreateUserModal={showCreateUserModal}
                                     setShowCreateUserModal={setShowCreateUserModal}
@@ -487,7 +482,7 @@ export default function App() {
                                 messages={messages}
                                 selectedImageName={() => selectedUserImage()?.name ?? null}
                                 draft={draft}
-                                onNewChat={() => createUserChatLocal(true)}
+                                onNewChat={() => clearChat(true)}
                                 onOpenChat={openChat}
                                 setDraft={setDraft}
                                 onSend={sendUserMessage}
