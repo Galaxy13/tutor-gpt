@@ -1,7 +1,7 @@
 import { createSignal, For, Show } from 'solid-js';
 import { marked } from 'marked';
 import type { AuthResponse, Chat, Message } from '../types';
-import { AdminApi } from '../api';
+import {AdminApi, resolveMessageImageUrls} from '../api';
 
 const md = (text: string) => marked.parse(text, { async: false }) as string;
 
@@ -39,7 +39,7 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
         setMessagesLoading(true);
         try {
             const msgs = await AdminApi.chatMessages(chatId, token());
-            setMessages(msgs);
+            setMessages(await resolveMessageImageUrls(msgs, token()));
         } finally {
             setMessagesLoading(false);
         }

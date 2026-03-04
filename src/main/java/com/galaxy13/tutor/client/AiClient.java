@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.content.Media;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AiClient {
 
     private final ChatClient chatClient;
@@ -39,6 +41,8 @@ public class AiClient {
                         ? promptBeautify(
                                 chat.getPrompt().getContent(), defaultPrompt, isPromptIncluded)
                         : defaultPrompt;
+
+        log.debug("Prompt text: {}", prompt);
 
         var promptRequest =
                 chatClient
@@ -68,6 +72,8 @@ public class AiClient {
                         ? promptBeautify(
                                 chat.getPrompt().getContent(), defaultPrompt, isPromptIncluded)
                         : defaultPrompt;
+
+        log.debug("Prompt text: {}", prompt);
 
         var promptRequest =
                 chatClient

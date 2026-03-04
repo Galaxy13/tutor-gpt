@@ -1,10 +1,10 @@
-import { Show, createMemo, createSignal } from 'solid-js';
+import {Show, createMemo, createSignal, onMount} from 'solid-js';
 import './styles.css';
 
 import type { AdminTab, AuthResponse, Chat, Message, Prompt, User } from './types';
 import type { UserForm } from './types';
 
-import { AdminApi, AuthApi, ChatApi, UserApi } from './api';
+import {AdminApi, AuthApi, ChatApi, resolveMessageImageUrls, UserApi} from './api';
 
 import AuthCard from './components/AuthCard';
 import MainLayout from './components/MainLayout';
@@ -105,6 +105,20 @@ export default function App() {
         }
     };
 
+    onMount(async () => {
+        const stored = localStorage.getItem('tutor_auth');
+        if (!stored) return;
+        try {
+            const data: AuthResponse = JSON.parse(stored);
+            setAuth(data);
+            setProfileContact(data.user.contact ?? '');
+            if (data.user.role === 'USER') await loadUserChats(data.token);
+            else await loadAdminData(data.token);
+        } catch {
+            localStorage.removeItem('tutor_auth');
+        }
+    });
+
     const logout = () => {
         setAuth(null);
         localStorage.removeItem('tutor_auth');
@@ -158,7 +172,7 @@ export default function App() {
         setMessagesLoading(true);
         try {
             const result = await ChatApi.messagesMine(chat.id, tk);
-            setMessages(result);
+            setMessages(await resolveMessageImageUrls(result, tk));
         } finally {
             setMessagesLoading(false);
         }
@@ -314,7 +328,7 @@ export default function App() {
         setMessagesLoading(true);
         try {
             const result = await AdminApi.chatMessages(chatId, token());
-            setAdminMessages(result);
+            setAdminMessages(await resolveMessageImageUrls(result, token()));
         } finally {
             setMessagesLoading(false);
         }
@@ -346,7 +360,7 @@ export default function App() {
         setMessagesLoading(true);
         try {
             const msgs = await AdminApi.chatMessages(chatId, token());
-            setMyChatMessages(msgs);
+            setMyChatMessages(await resolveMessageImageUrls(msgs, token()));
         } finally {
             setMessagesLoading(false);
         }
@@ -399,7 +413,7 @@ export default function App() {
         setMessagesLoading(true);
         try {
             const msgs = await AdminApi.chatMessages(chatId, token());
-            setUserChatMessages(msgs);
+            setUserChatMessages(await resolveMessageImageUrls(msgs, token()));
         } finally {
             setMessagesLoading(false);
         }

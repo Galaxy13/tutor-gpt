@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 
 CREATE TABLE IF NOT EXISTS images (
-    id uuid primary key not null default gen_random_uuid(),
+    id uuid primary key not null unique,
     user_id uuid references users(id)
 );
 

@@ -36,6 +36,7 @@ spring:
       max-file-size: 500MB
       max-request-size: 500MB
 
+
 minio:
   endpoint: ${MINIO_URL:http://localhost:9000}
   access-key: ${MINIO_ADMIN}
@@ -58,3 +59,8 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: 3600000
   refresh-expiration: 3600000
+
+logging:
+  level:
+    com.galaxy13.tutor.client: debug
+    com.galaxy13.tutor: error

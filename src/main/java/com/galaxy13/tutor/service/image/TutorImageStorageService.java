@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Slf4j
 @Service
@@ -45,16 +44,20 @@ public class TutorImageStorageService implements ImageStorageService {
 
         try {
             minioClient.putObject(
-                    PutObjectArgs.builder().bucket(properties.getBucket()).object(fileId.toString()).stream(
+                    PutObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(fileId.toString()).stream(
                                     file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
                             .build());
-
-            Image image = new Image();
-            image.setId(fileId);
 
             User user = userRepository.getUserById(principal.getId()).orElseThrow(
                     () -> new ResourceNotFoundException("User with id " + principal.getId() + " not found"));
+
+            Image image = new Image();
+            image.setId(fileId);
             image.setUser(user);
+            imageRepository.save(image);
         } catch (Exception e) {
             throw new MinioUploadException("Could not save image to Minio", e);
         }
@@ -67,7 +70,7 @@ public class TutorImageStorageService implements ImageStorageService {
 
         Image image = imageRepository.findById(imageId).orElseThrow(
                 () -> new ResourceNotFoundException("Image with id " + imageId + " not found"));
-        if (!image.getUser().getId().equals(principal.getId()) || !principal.getRole().equals(Role.ADMIN)) {
+        if (!image.getUser().getId().equals(principal.getId()) && !principal.getRole().equals(Role.ADMIN)) {
             throw new ResourceAccessException("You have not access to acquired resource");
         }
 

@@ -1,6 +1,7 @@
 import type { AuthResponse, Chat, Message, Prompt, User, UserForm } from "./types";
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080/api/v1';
+export const API_ORIGIN = new URL(API_BASE).origin;
 
 export async function api<T>(path: string, method = 'GET', body?: unknown, token?: string): Promise<T> {
     const isFormData = body instanceof FormData;
@@ -16,6 +17,27 @@ export async function api<T>(path: string, method = 'GET', body?: unknown, token
     if (!response.ok) throw new Error(await response.text());
     if (response.status === 204) return undefined as T;
     return await response.json() as Promise<T>;
+}
+
+export async function fetchImageBlobUrl(imageUrl: string, token: string): Promise<string> {
+    const response = await fetch(`${API_ORIGIN}${imageUrl}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return '';
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+}
+
+export async function resolveMessageImageUrls(messages: Message[], token: string): Promise<Message[]> {
+    return Promise.all(
+        messages.map(async (msg) => {
+            if (msg.imageUrl && msg.imageUrl.startsWith('/api/v1/files/')) {
+                const blobUrl = await fetchImageBlobUrl(msg.imageUrl, token);
+                return { ...msg, imageUrl: blobUrl || msg.imageUrl };
+            }
+            return msg;
+        })
+    );
 }
 
 export const AuthApi = {
