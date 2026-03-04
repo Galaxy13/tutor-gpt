@@ -14,7 +14,6 @@ import AdminChatWindow from './components/AdminChatWindow';
 import ProfileModal from './components/ProfileModal';
 
 export default function App() {
-    // ---- HASH-BASED ADMIN CHAT WINDOW ----
     const hash = window.location.hash;
     if (hash === '#admin-chat-prompt' || hash === '#admin-chat-promptless') {
         const stored = localStorage.getItem('tutor_auth');

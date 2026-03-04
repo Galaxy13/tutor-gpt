@@ -37,8 +37,7 @@ spring:
       max-request-size: 500MB
 
 minio:
-  endpoint: ${MINIO_INTERNAL_URL:http://localhost:9000}
-  public-endpoint: ${MINIO_PUBLIC_URL}
+  endpoint: ${MINIO_URL:http://localhost:9000}
   access-key: ${MINIO_ADMIN}
   secret-key: ${MINIO_PASSWORD}
   bucket: chat-images
@@ -51,6 +50,9 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+
+server:
+  forward-headers-strategy: framework
 
 jwt:
   secret: ${JWT_SECRET}

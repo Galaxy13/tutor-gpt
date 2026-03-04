@@ -3,67 +3,88 @@ package com.galaxy13.tutor.service.image;
 import com.galaxy13.tutor.config.MinioConfigurationProperties;
 import com.galaxy13.tutor.exception.MinioDownloadException;
 import com.galaxy13.tutor.exception.MinioUploadException;
-import io.minio.GetPresignedObjectUrlArgs;
+import com.galaxy13.tutor.exception.ResourceAccessException;
+import com.galaxy13.tutor.exception.ResourceNotFoundException;
+import com.galaxy13.tutor.model.Image;
+import com.galaxy13.tutor.model.Role;
+import com.galaxy13.tutor.model.User;
+import com.galaxy13.tutor.repository.ImageRepository;
+import com.galaxy13.tutor.repository.UserRepository;
+import com.galaxy13.tutor.security.UserPrincipal;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.http.Method;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
+import java.io.InputStream;
+import java.util.UUID;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TutorImageStorageService implements ImageStorageService {
 
-    private final MinioClient internalClient;
-
-    private final MinioClient publicClient;
+    private final MinioClient minioClient;
 
     private final MinioConfigurationProperties properties;
 
-    public TutorImageStorageService(
-            @Qualifier("minioInternalClient") MinioClient internalClient,
-            @Qualifier("minioPublicClient") MinioClient publicClient,
-            MinioConfigurationProperties properties
-    ) {
-        this.internalClient = internalClient;
-        this.publicClient = publicClient;
-        this.properties = properties;
-    }
+    private final ImageRepository imageRepository;
+
+    private final UserRepository userRepository;
 
     @Override
-    public String saveImage(MultipartFile file) {
-        String fileKey = UUID.randomUUID().toString();
+    @Transactional
+    public String saveImage(MultipartFile file, UserPrincipal principal) {
+        UUID fileId = UUID.randomUUID();
 
         try {
-            internalClient.putObject(
-                    PutObjectArgs.builder().bucket(properties.getBucket()).object(fileKey).stream(
+            minioClient.putObject(
+                    PutObjectArgs.builder().bucket(properties.getBucket()).object(fileId.toString()).stream(
                                     file.getInputStream(), file.getSize(), -1)
                             .build());
+
+            Image image = new Image();
+            image.setId(fileId);
+
+            User user = userRepository.getUserById(principal.getId()).orElseThrow(
+                    () -> new ResourceNotFoundException("User with id " + principal.getId() + " not found"));
+            image.setUser(user);
         } catch (Exception e) {
             throw new MinioUploadException("Could not save image to Minio", e);
         }
-        log.info("Image saved for fileKey={}", fileKey);
-        return fileKey;
+        log.info("Image saved for fileKey={}", fileId);
+        return fileId.toString();
     }
 
     @Override
-    public String getPresignedDownloadUrl(UUID imageId, int expireIn) {
+    public InputStream downloadImage(UUID imageId, UserPrincipal principal) {
+
+        Image image = imageRepository.findById(imageId).orElseThrow(
+                () -> new ResourceNotFoundException("Image with id " + imageId + " not found"));
+        if (!image.getUser().getId().equals(principal.getId()) || !principal.getRole().equals(Role.ADMIN)) {
+            throw new ResourceAccessException("You have not access to acquired resource");
+        }
+
         try {
-            return publicClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(properties.getBucket())
-                            .object(imageId.toString())
-                            .expiry(expireIn, TimeUnit.MINUTES)
-                            .build());
+            return minioClient.getObject(GetObjectArgs
+                    .builder()
+                    .bucket(properties.getBucket())
+                    .object(imageId.toString())
+                    .build());
         } catch (Exception e) {
             throw new MinioDownloadException(
-                    "Could not get presigned download url for imageId=" + imageId, e);
+                    "Could not get InputStream download url for imageId =" + imageId, e);
         }
+    }
+
+    @Override
+    public String generateDownloadLink(UUID imageId) {
+        return "/api/v1/files/download/" + imageId.toString();
     }
 }

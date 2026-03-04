@@ -31,6 +31,11 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     "timestamp" TIMESTAMP NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS images (
+    id uuid primary key not null default gen_random_uuid(),
+    user_id uuid references users(id)
+);
+
 CREATE INDEX IF NOT EXISTS chat_messages_conversation_id_idx
     ON chat_messages(conversation_id, "timestamp");
 

@@ -52,8 +52,8 @@ public class TutorMessageService implements MessageService {
                             MessageDto dto = messageConverter.convert(s);
                             if (s.getImageId() != null) {
                                 dto.setImageUrl(
-                                        imageStorageService.getPresignedDownloadUrl(
-                                                s.getImageId(), 1));
+                                        imageStorageService.generateDownloadLink(
+                                                s.getImageId()));
                             }
                             return dto;
                         })
@@ -111,7 +111,7 @@ public class TutorMessageService implements MessageService {
                         ? MimeTypeUtils.parseMimeType(image.getContentType())
                         : MimeTypeUtils.IMAGE_JPEG;
 
-        String imageKey = imageStorageService.saveImage(image);
+        String imageKey = imageStorageService.saveImage(image, principal);
 
         Resource imageResource;
 
