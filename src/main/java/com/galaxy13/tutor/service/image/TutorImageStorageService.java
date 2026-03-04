@@ -9,26 +9,38 @@ import io.minio.PutObjectArgs;
 import io.minio.http.Method;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TutorImageStorageService implements ImageStorageService {
 
-    private final MinioClient minioClient;
+    private final MinioClient internalClient;
+
+    private final MinioClient publicClient;
 
     private final MinioConfigurationProperties properties;
+
+    public TutorImageStorageService(
+            @Qualifier("minioInternalClient") MinioClient internalClient,
+            @Qualifier("minioPublicClient") MinioClient publicClient,
+            MinioConfigurationProperties properties
+    ) {
+        this.internalClient = internalClient;
+        this.publicClient = publicClient;
+        this.properties = properties;
+    }
 
     @Override
     public String saveImage(MultipartFile file) {
         String fileKey = UUID.randomUUID().toString();
 
         try {
-            minioClient.putObject(
+            internalClient.putObject(
                     PutObjectArgs.builder().bucket(properties.getBucket()).object(fileKey).stream(
                                     file.getInputStream(), file.getSize(), -1)
                             .build());
@@ -42,7 +54,7 @@ public class TutorImageStorageService implements ImageStorageService {
     @Override
     public String getPresignedDownloadUrl(UUID imageId, int expireIn) {
         try {
-            return minioClient.getPresignedObjectUrl(
+            return publicClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(properties.getBucket())

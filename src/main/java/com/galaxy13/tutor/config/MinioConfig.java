@@ -15,7 +15,7 @@ public class MinioConfig {
 
     private final MinioConfigurationProperties properties;
 
-    @Bean
+    @Bean("minioInternalClient")
     public MinioClient minioClient() {
         MinioClient minioClient =
                 MinioClient.builder()
@@ -36,5 +36,13 @@ public class MinioConfig {
             throw new IllegalStateException("Could not create minio client", ex);
         }
         return minioClient;
+    }
+
+    @Bean("minioPublicClient")
+    public MinioClient minioPublicClient() {
+        return MinioClient.builder()
+                .endpoint(properties.getPublicEndpoint())
+                .credentials(properties.getAccessKey(), properties.getSecretKey())
+                .build();
     }
 }

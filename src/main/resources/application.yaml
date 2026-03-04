@@ -3,8 +3,7 @@ spring:
     name: tutor-chatgpt
   ai:
     openai:
-      api-key: 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
-    #      api-key: ${OPENAPI_KEY}
+      api-key: ${OPENAPI_KEY}
     chat:
       memory:
         repository:
@@ -13,17 +12,17 @@ spring:
             platform: auto-detected
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/tutor
-    username: postgres
-    password: postgres
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/tutor}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
   flyway:
     locations: classpath:db/migrations
     enabled: true
-    user: postgres
-    password: postgres
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
   shell:
     interactive:
@@ -38,9 +37,10 @@ spring:
       max-request-size: 500MB
 
 minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin123
+  endpoint: ${MINIO_INTERNAL_URL:http://localhost:9000}
+  public-endpoint: ${MINIO_PUBLIC_URL}
+  access-key: ${MINIO_ADMIN}
+  secret-key: ${MINIO_PASSWORD}
   bucket: chat-images
 
 management:
@@ -53,6 +53,6 @@ management:
       show-details: when_authorized
 
 jwt:
-  secret: N4aQn+nsjtQ05/O0ca5BkUOx6mebpTOc7AVUbVSLAW4=
+  secret: ${JWT_SECRET}
   expiration: 3600000
   refresh-expiration: 3600000
