@@ -44,11 +44,15 @@ public class SystemUserSender implements ApplicationRunner {
         String passwordHash = encoder.encode(userProperties.getPassword());
 
         if (repository.existsByUsername(userProperties.getUsername())) {
-            if (repository.existsByPasswordHash(passwordHash)) return;
-            User user = repository.findUserByUsername(userProperties.getUsername()).orElseThrow(
-                    () -> new ResourceNotFoundException("User not found while finding system user"));
-            user.setPasswordHash(passwordHash);
-            log.info("System user password changed");
+            User user = repository.findUserByUsername(userProperties.getUsername())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found while finding system user"));
+
+            userProperties.setId(user.getId());
+
+            if (!encoder.matches(userProperties.getPassword(), user.getPasswordHash())) {
+                user.setPasswordHash(encoder.encode(userProperties.getPassword()));
+                log.info("System user password changed");
+            }
             return;
         }
 
