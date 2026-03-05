@@ -1,7 +1,7 @@
 import {Show, createMemo, createSignal, onMount} from 'solid-js';
 import './styles.css';
 
-import type { AdminTab, AuthResponse, Chat, Message, Prompt, User } from './types';
+import {AdminTab, AuthResponse, Chat, Message, Prompt, ToastType, User} from './types';
 import type { UserForm } from './types';
 
 import {AdminApi, AuthApi, ChatApi, resolveMessageImageUrls, UserApi} from './api';
@@ -12,6 +12,7 @@ import UserLayout from './components/UserLayout';
 import AdminPanel from './components/AdminPanel';
 import AdminChatWindow from './components/AdminChatWindow';
 import ProfileModal from './components/ProfileModal';
+import store from "./store";
 
 export default function App() {
     const hash = window.location.hash;
@@ -237,12 +238,22 @@ export default function App() {
     // ---- PROFILE ----
 
     const updateProfile = async () => {
-        await UserApi.mePatch({ contact: profileContact() }, token());
+        try {
+            await UserApi.mePatch({ contact: profileContact() }, token());
+            store.addToast(ToastType.Success, 'Пользователь обновлён');
+        } catch (e) {
+            store.addToast(ToastType.Error, `${e}`);
+        }
     };
 
     const changePassword = async () => {
-        await UserApi.changePassword(passwords(), token());
-        setPasswords({ currentPassword: '', newPassword: '' });
+        try {
+            await UserApi.changePassword(passwords(), token());
+            setPasswords({ currentPassword: '', newPassword: '' });
+            store.addToast(ToastType.Success, 'Пароль успешно изменён');
+        } catch (e) {
+            store.addToast(ToastType.Error, `${e}`);
+        }
     };
 
     // ---- ADMIN FLOW ----
@@ -262,9 +273,14 @@ export default function App() {
     };
 
     const submitCreateUser = async () => {
-        await AdminApi.createUser(newUserDraft(), token());
-        setShowCreateUserModal(false);
-        await loadAdminData();
+        try {
+            await AdminApi.createUser(newUserDraft(), token());
+            setShowCreateUserModal(false);
+            await loadAdminData();
+            store.addToast(ToastType.Success, 'Пользователь создан');
+        } catch (e) {
+            store.addToast(ToastType.Error, `${e}`);
+        }
     };
 
     // -- Edit User --
@@ -283,30 +299,47 @@ export default function App() {
         setShowEditUserModal(true);
     };
 
-    const submitEditUser = async () => {
-        const d = editUserDraft();
-        await AdminApi.updateUser(editUserId(), {
-            username: d.username,
-            name: d.name,
-            surname: d.surname,
-            role: d.role,
-            contact: d.contact,
-            isActive: d.isActive,
-        }, token());
-
-        if (d.password.trim()) {
-            await AdminApi.resetPassword(editUserId(), d.password, token());
+    const submitEditUserInfo = async () => {
+        try {
+            const d = editUserDraft();
+            await AdminApi.updateUser(editUserId(), {
+                username: d.username,
+                name: d.name,
+                surname: d.surname,
+                role: d.role,
+                contact: d.contact,
+                isActive: d.isActive,
+            }, token());
+            await loadAdminData();
+            store.addToast(ToastType.Success, 'Пользователь обновлён');
+        } catch (e) {
+            store.addToast(ToastType.Error, `${e}`);
         }
-
-        setShowEditUserModal(false);
-        await loadAdminData();
     };
 
-    // -- Delete User --
+    const submitResetPassword = async () => {
+        const d = editUserDraft();
+
+        if (d.password.trim()) {
+            if (!d.password.trim()) return;
+            try {
+                await AdminApi.resetPassword(editUserId(), d.password, token());
+                setEditUserDraft((p) => ({ ...p, password: '' }));
+                store.addToast(ToastType.Success, 'Пароль сброшен');
+            } catch (e) {
+                store.addToast(ToastType.Error, `Ошибка сброса пароля: ${e}`);
+            }
+        }
+    }
 
     const deleteUser = async (id: string) => {
-        await AdminApi.deleteUser(id, token());
-        await loadAdminData();
+        try {
+            await AdminApi.deleteUser(id, token());
+            await loadAdminData();
+            store.addToast(ToastType.Success, 'Пользователь удалён');
+        } catch (e) {
+            store.addToast(ToastType.Error, `Ошибка удаления пользователя: ${e}`);
+        }
     };
 
     // -- Prompts --
@@ -465,7 +498,8 @@ export default function App() {
                                     editUserDraft={editUserDraft}
                                     setEditUserDraft={setEditUserDraft}
                                     onCloseEditModal={() => setShowEditUserModal(false)}
-                                    onSubmitEdit={submitEditUser}
+                                    onSubmitEditInfo={submitEditUserInfo}
+                                    onSubmitResetPassword={submitResetPassword}
 
                                     onOpenUserChats={openUserChats}
                                     viewingUser={viewingUser}

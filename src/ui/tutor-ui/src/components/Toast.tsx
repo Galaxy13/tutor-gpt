@@ -7,7 +7,7 @@ const Toast = () => {
         <div class="toast-container">
             <For each={store.toastStore.toasts}>
                 {(toast: ToastObject) => (
-                    <div class="toast" className={toast.type}>
+                    <div class={`toast ${toast.type}`}>
                         <i
                             class="icon"
                             classList={{

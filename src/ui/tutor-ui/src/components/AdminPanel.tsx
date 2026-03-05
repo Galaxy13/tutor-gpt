@@ -37,7 +37,8 @@ export default function AdminPanel(props: {
     editUserDraft: Accessor<UserForm>;
     setEditUserDraft: (fn: (prev: UserForm) => UserForm) => void;
     onCloseEditModal: () => void;
-    onSubmitEdit: () => void;
+    onSubmitEditInfo: () => void;
+    onSubmitResetPassword: () => void;
 
     onOpenUserChats: (user: User) => void;
     viewingUser: Accessor<User | null>;
@@ -186,7 +187,8 @@ export default function AdminPanel(props: {
                         draft={props.editUserDraft}
                         setDraft={props.setEditUserDraft}
                         onClose={props.onCloseEditModal}
-                        onSubmit={props.onSubmitEdit}
+                        onSubmitInfo={props.onSubmitEditInfo}
+                        onSubmitResetPassword={props.onSubmitResetPassword}
                     />
                 </Show>
 

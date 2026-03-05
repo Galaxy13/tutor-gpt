@@ -7,7 +7,8 @@ export default function EditUserModal(props: {
     draft: Accessor<UserForm>;
     setDraft: (fn: (prev: UserForm) => UserForm) => void;
     onClose: () => void;
-    onSubmit: () => void;
+    onSubmitInfo: () => void;
+    onSubmitResetPassword: () => void;
 }) {
     return (
         <Show when={props.open()}>
@@ -59,15 +60,6 @@ export default function EditUserModal(props: {
                         </select>
                     </label>
 
-                    <label>
-                        Новый пароль (оставьте пустым, чтобы не менять)
-                        <input
-                            type="password"
-                            value={props.draft().password}
-                            onInput={(e) => props.setDraft((p) => ({ ...p, password: e.currentTarget.value }))}
-                        />
-                    </label>
-
                     <label class="checkbox-label">
                         <input
                             type="checkbox"
@@ -79,7 +71,24 @@ export default function EditUserModal(props: {
 
                     <div class="row actions">
                         <button class="btn-secondary" onClick={props.onClose}>Отмена</button>
-                        <button onClick={props.onSubmit}>Сохранить</button>
+                        <button onClick={props.onSubmitInfo}>Сохранить данные</button>
+                    </div>
+                </div>
+
+                <div style="height: 1px; background: var(--border); margin: 16px 0;" />
+
+                <div class="form">
+                    <label>
+                        Новый пароль
+                        <input
+                            type="password"
+                            value={props.draft().password}
+                            onInput={(e) => props.setDraft((p) => ({ ...p, password: e.currentTarget.value }))}
+                        />
+                    </label>
+
+                    <div class="row actions">
+                        <button onClick={props.onSubmitResetPassword}>Сбросить пароль</button>
                     </div>
                 </div>
             </div>
