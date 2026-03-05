@@ -156,17 +156,6 @@ export default function App() {
         setChats(result);
 
         if (result.length > 0) await openChat(result[0], tk);
-        else await createUserChat(true, tk);
-    };
-
-    const createUserChat = async (autoselect = true, tk = token()) => {
-        const created = await ChatApi.createMine({ message: "", name: '' }, tk);
-        setChats((prev) => [created, ...prev]);
-
-        if (autoselect) {
-            setActiveChat(created);
-            setMessages([]);
-        }
     };
 
     const openChat = async (chat: Chat, tk = token()) => {
