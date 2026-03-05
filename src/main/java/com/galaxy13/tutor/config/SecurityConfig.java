@@ -75,7 +75,8 @@ public class SecurityConfig {
         corsConfiguration.setAllowedOrigins(
                 List.of("http://localhost:3000",
                         "http://localhost:5173",
-                        "http://localhost:8080"));
+                        "http://localhost:8080",
+                        "https://tutor.retroider.ru"));
         corsConfiguration.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(
