@@ -12,6 +12,7 @@ import UserLayout from './components/UserLayout';
 import AdminPanel from './components/AdminPanel';
 import AdminChatWindow from './components/AdminChatWindow';
 import ProfileModal from './components/ProfileModal';
+import Toast from './components/Toast';
 import store from "./store";
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
         return (
             <div class="app">
                 <AdminChatWindow auth={authData} withPrompt={withPrompt} />
+                <Toast />
             </div>
         );
     }
@@ -552,6 +554,7 @@ export default function App() {
                     </MainLayout>
                 )}
             </Show>
+            <Toast />
         </div>
     );
 }
