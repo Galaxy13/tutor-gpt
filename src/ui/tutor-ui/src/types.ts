@@ -49,4 +49,17 @@ export type UserForm = {
     isActive: boolean;
 };
 
+export type ToastObject = {
+    toastId: string;
+    message: string;
+    type: ToastType;
+};
+
+export enum ToastType {
+    Success = "is-success",
+    Error = "is-error",
+    Info = "is-info",
+    Warning = "is-warning",
+}
+
 export type AdminTab = 'users' | 'chats' | 'my_chats' | 'prompts' | 'user_chats';

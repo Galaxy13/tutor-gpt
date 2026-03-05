@@ -389,3 +389,123 @@ header .header-actions { display: flex; gap: 8px; }
     gap: 16px; color: var(--text-muted); animation: fadeInUp 0.4s ease;
 }
 .empty-chat-placeholder .placeholder-text { font-size: 1.05rem; font-weight: 500; }
+
+.toast-container {
+    position: fixed;
+    top: 1.5em;
+    right: 1.5em;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.6s ease-in-out;
+    animation: toast-in-right 0.7s;
+    z-index: 99999;
+}
+
+.toast-container .toast {
+    min-width: 22em;
+    color: white;
+    margin-bottom: 1em;
+    transition: 0.3s ease;
+    animation: toast-in-right 0.5s;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-container .toast i,
+.toast-container .toast button {
+    flex: 0 1 0;
+    text-align: center;
+    padding: 1em;
+}
+
+.toast-container .toast span {
+    flex: 1 1 0;
+    margin: 0em 0.5em;
+}
+
+.toast-container .toast button {
+    background: none;
+    border: none;
+    color: white;
+    display: block;
+    margin: 0;
+    cursor: pointer;
+    border-left: 1px solid white;
+}
+
+.toast-container .toast.is-error {
+    background-color: var(--primary-red);
+}
+
+.toast-container .toast.is-success {
+    background-color: var(--primary-green);
+}
+
+.toast-container .toast.is-info {
+    background-color: var(--primary-blue);
+}
+
+.toast-container .toast.is-warning {
+    background-color: var(--primary-yellow);
+}
+
+@keyframes toast-in-right {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 48em) {
+    .toast-container {
+        top: unset;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        flex-direction: column-reverse;
+    }
+
+    .toast-container .toast {
+        margin-bottom: 0em;
+        margin-top: 0.5em;
+    }
+}
+
+@font-face {
+    font-family: "icomoon";
+    src: url("/fonts/icomoon.ttf?fmmix6") format("truetype"),
+    url("/fonts/icomoon.woff?fmmix6") format("woff"),
+    url("/fonts/icomoon.svg?fmmix6#icomoon") format("svg");
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
+i {
+    font-family: "icomoon", serif !important;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-alert-circle:before {
+    content: "\e917";
+}
+.icon-info:before {
+    content: "\e918";
+}
+.icon-check-circle:before {
+    content: "\e912";
+}
+.icon-x-circle:before {
+    content: "\e913";
+}
