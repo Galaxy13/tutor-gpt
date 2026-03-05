@@ -1,7 +1,7 @@
 import type { AuthResponse, Chat, Message, Prompt, User, UserForm } from "./types";
 
 export const API_BASE = '/api/v1';
-export const API_ORIGIN = new URL(API_BASE).origin;
+export const API_ORIGIN = new URL(API_BASE, window.location.href).origin;
 
 export async function api<T>(path: string, method = 'GET', body?: unknown, token?: string): Promise<T> {
     const isFormData = body instanceof FormData;
