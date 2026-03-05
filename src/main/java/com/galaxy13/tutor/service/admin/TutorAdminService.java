@@ -1,5 +1,6 @@
 package com.galaxy13.tutor.service.admin;
 
+import com.galaxy13.tutor.config.SystemUserProperties;
 import com.galaxy13.tutor.dto.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
 import com.galaxy13.tutor.exception.BadRequestException;
@@ -10,6 +11,8 @@ import com.galaxy13.tutor.repository.UserRepository;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+
+import com.galaxy13.tutor.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.converter.Converter;
@@ -27,6 +30,8 @@ public class TutorAdminService implements AdminService {
     private final Converter<User, UserDto> userDtoConverter;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final SystemUserProperties systemUserProperties;
 
     @Override
     @Transactional(readOnly = true)
@@ -76,6 +81,11 @@ public class TutorAdminService implements AdminService {
                                 () ->
                                         new ResourceNotFoundException(
                                                 "User with id: " + userId + " not found"));
+
+        if (user.getUsername().equals(request.getUsername())) {
+            throw new BadRequestException("А не много ли хочешь? Обновлять системного пользователя запрещено");
+        }
+
         user.setName(request.getName());
         user.setSurname(request.getSurname());
         user.setUsername(request.getUsername());
@@ -109,7 +119,10 @@ public class TutorAdminService implements AdminService {
 
     @Override
     @Transactional
-    public void deleteUser(UUID id) {
+    public void deleteUser(UserPrincipal principal, UUID id) {
+        if (id == principal.getId()) {
+            throw new BadRequestException("Ты еблан? Зачем ты удаляешь себя?");
+        }
         User user =
                 userRepository
                         .getUserById(id)

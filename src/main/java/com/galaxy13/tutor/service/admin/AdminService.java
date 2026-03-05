@@ -2,6 +2,8 @@ package com.galaxy13.tutor.service.admin;
 
 import com.galaxy13.tutor.dto.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
+import com.galaxy13.tutor.security.UserPrincipal;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -16,5 +18,5 @@ public interface AdminService {
 
     void resetUserPassword(UUID id, AdminDto.ResetPasswordRequest request);
 
-    void deleteUser(UUID id);
+    void deleteUser(UserPrincipal principal, UUID id);
 }

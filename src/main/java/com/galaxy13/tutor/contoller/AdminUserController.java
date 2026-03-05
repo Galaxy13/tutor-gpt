@@ -2,6 +2,7 @@ package com.galaxy13.tutor.contoller;
 
 import com.galaxy13.tutor.dto.AdminDto;
 import com.galaxy13.tutor.dto.UserDto;
+import com.galaxy13.tutor.security.UserPrincipal;
 import com.galaxy13.tutor.service.admin.AdminService;
 import com.galaxy13.tutor.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -71,8 +73,9 @@ public class AdminUserController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        adminService.deleteUser(id);
+    public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal UserPrincipal principal,
+                                           @PathVariable UUID id) {
+        adminService.deleteUser(principal, id);
         return ResponseEntity.ok(null);
     }
 }

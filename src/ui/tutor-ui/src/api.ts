@@ -14,7 +14,7 @@ export async function api<T>(path: string, method = 'GET', body?: unknown, token
         body: body ? (isFormData ? body as FormData : JSON.stringify(body)) : undefined,
     });
 
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) throw new Error(await response.text())
     if (response.status === 204) return undefined as T;
     return await response.json() as Promise<T>;
 }

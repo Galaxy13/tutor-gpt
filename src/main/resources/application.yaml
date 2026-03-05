@@ -43,6 +43,11 @@ minio:
   secret-key: ${MINIO_PASSWORD}
   bucket: chat-images
 
+system_user:
+  username: ${SYSTEM_USER}
+  password: ${SYSTEM_PASSWORD}
+  enabled: ${SYSTEM_USER_ENBLED:true}
+
 management:
   endpoints:
     jmx:

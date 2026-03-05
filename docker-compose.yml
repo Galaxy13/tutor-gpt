@@ -79,6 +79,8 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
       - OPENAPI_KEY=${OPENAPI_KEY}
+      - SYSTEM_USER=${SYSTEM_USER}
+      - SYSTEM_PASSWORD=${SYSTEM_PASSWORD}
     networks:
       - tutor-network
 
