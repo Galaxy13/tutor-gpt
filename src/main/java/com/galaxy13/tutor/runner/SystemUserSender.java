@@ -60,6 +60,7 @@ public class SystemUserSender implements ApplicationRunner {
         user.setRole(Role.ADMIN);
         user.setContact("gen.hort54@gmail.com");
         user.setIsActive(true);
-        repository.save(user);
+        user = repository.save(user);
+        userProperties.setId(user.getId());
     }
 }

@@ -43,12 +43,14 @@ public class TutorAuthService implements AuthService {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
         if (principal == null) {
-            throw new BadRequestException("Invalid username or password");
+            throw new BadRequestException("Неверное имя пользователя/пароль");
         }
         User user =
                 userRepository
                         .findById(principal.getId())
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Пользователь с именем: " +
+                                        request.getUsername() + " не найден"));
 
         String accessToken = jwtUtils.generateToken(authentication);
         String refreshToken = jwtUtils.generateRefreshToken(authentication);
@@ -65,7 +67,7 @@ public class TutorAuthService implements AuthService {
     @Override
     public AuthDto.AuthResponse register(AuthDto.RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new BadRequestException("Username already exists");
+            throw new BadRequestException("Пользователь с таким именем уже существует");
         }
         User user = new User();
         user.setUsername(request.getUsername());
@@ -107,9 +109,8 @@ public class TutorAuthService implements AuthService {
         User user =
                 userRepository
                         .findUserByUsername(username)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (!user.getIsActive()) throw new BadRequestException("User is inactive");
+                        .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        if (!user.getIsActive()) throw new BadRequestException("Пользователь не активен");
 
         String newAccessToken = jwtUtils.generateToken(user.getUsername());
         String newRefreshToken = jwtUtils.generateRefreshToken(user.getUsername());

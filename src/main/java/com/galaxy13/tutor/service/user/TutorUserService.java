@@ -1,5 +1,6 @@
 package com.galaxy13.tutor.service.user;
 
+import com.galaxy13.tutor.config.SystemUserProperties;
 import com.galaxy13.tutor.dto.UserDto;
 import com.galaxy13.tutor.exception.BadRequestException;
 import com.galaxy13.tutor.exception.ResourceNotFoundException;
@@ -22,6 +23,8 @@ public class TutorUserService implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final SystemUserProperties systemUserProperties;
+
     @Override
     @Transactional(readOnly = true)
     public UserDto getCurrentUser(UUID id) {
@@ -38,6 +41,10 @@ public class TutorUserService implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(UUID id, UserDto.UpdateUserRequest request) {
+        if (systemUserProperties.getId().equals(id)) {
+            throw new BadRequestException("Иди ка нахуй");
+        }
+
         User user =
                 userRepository
                         .findById(id)
@@ -52,6 +59,10 @@ public class TutorUserService implements UserService {
     @Override
     @Transactional
     public void changePassword(UUID id, UserDto.ChangePasswordRequest request) {
+        if (systemUserProperties.getId().equals(id)) {
+            throw new BadRequestException("Свой пароль можешь оставить себе, грязное животное");
+        }
+
         User user =
                 userRepository
                         .getUserById(id)

@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @ConfigurationProperties(prefix = "system-user")
 @NoArgsConstructor
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Component;
 public class SystemUserProperties {
 
     private String username;
+
+    private UUID id;
 
     private String password;
 

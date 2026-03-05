@@ -73,6 +73,9 @@ public class TutorAdminService implements AdminService {
         if (userRepository.existsByUsernameAndIdNot(request.getUsername(), userId)) {
             throw new BadRequestException("Username already exists");
         }
+        if (userId.equals(systemUserProperties.getId())) {
+            throw new BadRequestException("А не дохуя ли хочешь? Обновлять системного пользователя запрещено");
+        }
 
         User user =
                 userRepository
@@ -81,10 +84,6 @@ public class TutorAdminService implements AdminService {
                                 () ->
                                         new ResourceNotFoundException(
                                                 "User with id: " + userId + " not found"));
-
-        if (user.getUsername().equals(request.getUsername())) {
-            throw new BadRequestException("А не много ли хочешь? Обновлять системного пользователя запрещено");
-        }
 
         user.setName(request.getName());
         user.setSurname(request.getSurname());
@@ -106,6 +105,10 @@ public class TutorAdminService implements AdminService {
     @Override
     @Transactional
     public void resetUserPassword(UUID id, AdminDto.ResetPasswordRequest request) {
+        if (id.equals(systemUserProperties.getId())) {
+            throw new BadRequestException("Ага, щас. Иди нахуй");
+        }
+
         User user =
                 userRepository
                         .getUserById(id)
@@ -113,6 +116,7 @@ public class TutorAdminService implements AdminService {
                                 () ->
                                         new ResourceNotFoundException(
                                                 "User with id: " + id + " not found"));
+
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
     }
@@ -123,17 +127,22 @@ public class TutorAdminService implements AdminService {
         if (id == principal.getId()) {
             throw new BadRequestException("Ты еблан? Зачем ты удаляешь себя?");
         }
+        if (id.equals(systemUserProperties.getId())) {
+            throw new BadRequestException("Ты охуел? Хуй тебе, отсоси");
+        }
+
         User user =
                 userRepository
                         .getUserById(id)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
-                                                "User with id: " + id + " not found"));
+                                                "Пользователь с id: " + id + " не найден"));
+
         if (user.getRole().equals(Role.ADMIN)) {
             long adminCount = userRepository.countByRole(Role.ADMIN);
             if (adminCount <= 1) {
-                throw new BadRequestException("You are not allowed to delete last administrator");
+                throw new BadRequestException("Удалять последнего администратора запрещено");
             }
         }
         userRepository.deleteById(id);
