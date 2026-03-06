@@ -48,6 +48,9 @@ system_user:
   password: ${SYSTEM_PASSWORD}
   enabled: ${SYSTEM_USER_ENBLED:true}
 
+custom:
+  domain: ${SERVER_DOMAIN:http://localhost:8080}
+
 management:
   endpoints:
     jmx:

@@ -32,6 +32,8 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
 
+    private final CustomConfigurationProperties customProperties;
+
     private final JWTUtils jwtUtils;
 
     @Bean
@@ -73,10 +75,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(
-                List.of("http://localhost:3000",
-                        "http://localhost:5173",
-                        "http://localhost:8080",
-                        "https://tutor.retroider.ru"));
+                List.of(customProperties.getDomain()));
         corsConfiguration.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(

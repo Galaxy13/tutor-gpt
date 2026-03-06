@@ -78,6 +78,7 @@ services:
       - OPENAPI_KEY=${OPENAPI_KEY}
       - SYSTEM_USER=${SYSTEM_USER}
       - SYSTEM_PASSWORD=${SYSTEM_PASSWORD}
+      - SERVER_DOMAIN=${SERVER_DOMAIN}
     networks:
       - tutor-network
 
