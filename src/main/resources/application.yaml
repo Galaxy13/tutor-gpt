@@ -49,7 +49,7 @@ system_user:
   enabled: ${SYSTEM_USER_ENBLED:true}
 
 custom:
-  domain: ${SERVER_DOMAIN:http://localhost:8080}
+  domain: ${SERVER_DOMAIN}
 
 management:
   endpoints:
