@@ -1,4 +1,4 @@
-import {Accessor, For, Index, Show} from "solid-js";
+import {Accessor, createSignal, For, Index, Show} from "solid-js";
 import { marked } from "marked";
 import type { AdminTab, Chat, Message, Prompt, User, UserForm } from "../types";
 import CreateUserModal from "./CreateUserModal";
@@ -64,6 +64,18 @@ export default function AdminPanel(props: {
 }) {
     let myChatImageInputRef: HTMLInputElement | undefined;
 
+    const [adminNavOpen, setAdminNavOpen] = createSignal(window.innerWidth > 768);
+    const [chatsSidebarOpen, setChatsSidebarOpen] = createSignal(window.innerWidth > 768);
+    const [myChatsSidebarOpen, setMyChatsSidebarOpen] = createSignal(window.innerWidth > 768);
+    const [userChatsSidebarOpen, setUserChatsSidebarOpen] = createSignal(window.innerWidth > 768);
+
+    const isMobile = () => window.innerWidth <= 768;
+
+    const handleAdminTabSwitch = (tab: AdminTab) => {
+        props.setAdminTab(tab);
+        if (isMobile()) setAdminNavOpen(false);
+    };
+
     const renderBubble = (msg: Message) => (
         <div class={`bubble ${msg.type === "USER" ? "user" : "assistant"}`}>
             <Show when={msg.imageUrl}>
@@ -87,27 +99,30 @@ export default function AdminPanel(props: {
     };
 
     return (
-        <div class="admin-layout">
+        <div class={`admin-layout ${!adminNavOpen() ? "sidebar-collapsed" : ""}`}>
             <nav class="admin-nav">
-                <div class="nav-label">Навигация</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+                    <div class="nav-label" style="padding: 0">Навигация</div>
+                    <button class="sidebar-toggle" style="display: inline-flex; background: transparent; color: var(--sidebar-text); border-color: rgba(255,255,255,0.15)" onClick={() => setAdminNavOpen(false)}>&times;</button>
+                </div>
 
                 <button
                     class={`nav-tab ${props.adminTab() === "users" ? "active" : ""}`}
-                    onClick={() => props.setAdminTab("users")}
+                    onClick={() => handleAdminTabSwitch("users")}
                 >
                     Пользователи
                 </button>
 
                 <button
                     class={`nav-tab ${props.adminTab() === "chats" ? "active" : ""}`}
-                    onClick={() => props.setAdminTab("chats")}
+                    onClick={() => handleAdminTabSwitch("chats")}
                 >
                     Чаты
                 </button>
 
                 <button
                     class={`nav-tab ${props.adminTab() === "prompts" ? "active" : ""}`}
-                    onClick={() => props.setAdminTab("prompts")}
+                    onClick={() => handleAdminTabSwitch("prompts")}
                 >
                     Промпты
                 </button>
@@ -115,16 +130,29 @@ export default function AdminPanel(props: {
                 <div class="nav-divider" />
                 <div class="nav-label">Действия</div>
 
-                <button class="nav-action" onClick={() => props.onOpenAdminChatWindow(true)}>
+                <button class="nav-action" onClick={() => { props.onOpenAdminChatWindow(true); if (isMobile()) setAdminNavOpen(false); }}>
                     Чаты с промптом
                 </button>
 
-                <button class="nav-action" onClick={() => props.onOpenAdminChatWindow(false)}>
+                <button class="nav-action" onClick={() => { props.onOpenAdminChatWindow(false); if (isMobile()) setAdminNavOpen(false); }}>
                     Чаты без промпта
                 </button>
             </nav>
 
             <div class="admin-content">
+                <Show when={!adminNavOpen()}>
+                    <div class="admin-content-header">
+                        <button class="sidebar-toggle" onClick={() => setAdminNavOpen(true)} title="Показать меню">&#9776;</button>
+                        <span style="font-size: 0.85rem; font-weight: 500">
+                            {props.adminTab() === "users" ? "Пользователи" :
+                             props.adminTab() === "chats" ? "Чаты" :
+                             props.adminTab() === "prompts" ? "Промпты" :
+                             props.adminTab() === "my_chats" ? "Мои чаты" :
+                             props.adminTab() === "user_chats" ? "Чаты пользователя" : ""}
+                        </span>
+                    </div>
+                </Show>
+
                 {/* ===== USERS TAB ===== */}
                 <Show when={props.adminTab() === "users"}>
                     <div class="admin-content-padded">
@@ -194,34 +222,42 @@ export default function AdminPanel(props: {
 
                 {/* ===== CHATS TAB (view-only) ===== */}
                 <Show when={props.adminTab() === "chats"}>
-                    <div class="chat-layout" style="height: calc(100vh - 57px)">
+                    <div class={`chat-layout ${!chatsSidebarOpen() ? "sidebar-collapsed" : ""}`} style="height: calc(100vh - 57px)">
                         <aside class="chat-sidebar">
                             <div class="sidebar-header">
                                 <h3>Все чаты</h3>
+                                <button class="sidebar-toggle" onClick={() => setChatsSidebarOpen(false)} title="Скрыть панель">&times;</button>
                             </div>
 
-                            <For each={props.allChats()} fallback={
-                                <div class="empty-state"><p>Нет чатов</p></div>
-                            }>
-                                {(c) => (
-                                    <button
-                                        class={`sidebar-btn ${props.selectedAdminChatId() === c.id ? "active" : ""}`}
-                                        onClick={() => props.onOpenAdminChat(c.id)}
-                                    >
-                                        <strong>{c.name || "Без названия"}</strong>
-                                        <small>
-                                            {c.username ? `@${c.username}` : ""}
-                                            {c.username && c.promptVersion ? " · " : ""}
-                                            {c.promptVersion ? `v${c.promptVersion}` : "без промпта"}
-                                            {" · "}
-                                            {new Date(c.createdAt).toLocaleDateString()}
-                                        </small>
-                                    </button>
-                                )}
-                            </For>
+                            <div class="sidebar-list">
+                                <For each={props.allChats()} fallback={
+                                    <div class="empty-state"><p>Нет чатов</p></div>
+                                }>
+                                    {(c) => (
+                                        <button
+                                            class={`sidebar-btn ${props.selectedAdminChatId() === c.id ? "active" : ""}`}
+                                            onClick={() => { props.onOpenAdminChat(c.id); if (isMobile()) setChatsSidebarOpen(false); }}
+                                        >
+                                            <strong>{c.name || "Без названия"}</strong>
+                                            <small>
+                                                {c.username ? `@${c.username}` : ""}
+                                                {c.username && c.promptVersion ? " · " : ""}
+                                                {c.promptVersion ? `v${c.promptVersion}` : "без промпта"}
+                                                {" · "}
+                                                {new Date(c.createdAt).toLocaleDateString()}
+                                            </small>
+                                        </button>
+                                    )}
+                                </For>
+                            </div>
                         </aside>
 
                         <div class="chat-main">
+                            <Show when={!chatsSidebarOpen()}>
+                                <div class="chat-main-header">
+                                    <button class="sidebar-toggle" onClick={() => setChatsSidebarOpen(true)} title="Показать панель">&#9776;</button>
+                                </div>
+                            </Show>
                             <Show when={props.selectedAdminChatId()} fallback={
                                 <div class="empty-state" style="flex:1">
                                     <p>Выберите чат из списка слева</p>
@@ -246,32 +282,40 @@ export default function AdminPanel(props: {
 
                 {/* ===== MY CHATS TAB (admin's own chats with send) ===== */}
                 <Show when={props.adminTab() === "my_chats"}>
-                    <div class="chat-layout" style="height: calc(100vh - 57px)">
+                    <div class={`chat-layout ${!myChatsSidebarOpen() ? "sidebar-collapsed" : ""}`} style="height: calc(100vh - 57px)">
                         <aside class="chat-sidebar">
                             <div class="sidebar-header">
                                 <h3>Мои чаты</h3>
+                                <button class="sidebar-toggle" onClick={() => setMyChatsSidebarOpen(false)} title="Скрыть панель">&times;</button>
                             </div>
 
-                            <For each={props.myChats()} fallback={
-                                <div class="empty-state"><p>Нет чатов</p></div>
-                            }>
-                                {(c) => (
-                                    <button
-                                        class={`sidebar-btn ${props.selectedMyChatId() === c.id ? "active" : ""}`}
-                                        onClick={() => props.onOpenMyChat(c.id)}
-                                    >
-                                        <strong>{c.name || "Без названия"}</strong>
-                                        <small>
-                                            {c.promptVersion ? `v${c.promptVersion}` : "без промпта"}
-                                            {" · "}
-                                            {new Date(c.createdAt).toLocaleDateString()}
-                                        </small>
-                                    </button>
-                                )}
-                            </For>
+                            <div class="sidebar-list">
+                                <For each={props.myChats()} fallback={
+                                    <div class="empty-state"><p>Нет чатов</p></div>
+                                }>
+                                    {(c) => (
+                                        <button
+                                            class={`sidebar-btn ${props.selectedMyChatId() === c.id ? "active" : ""}`}
+                                            onClick={() => { props.onOpenMyChat(c.id); if (isMobile()) setMyChatsSidebarOpen(false); }}
+                                        >
+                                            <strong>{c.name || "Без названия"}</strong>
+                                            <small>
+                                                {c.promptVersion ? `v${c.promptVersion}` : "без промпта"}
+                                                {" · "}
+                                                {new Date(c.createdAt).toLocaleDateString()}
+                                            </small>
+                                        </button>
+                                    )}
+                                </For>
+                            </div>
                         </aside>
 
                         <div class="chat-main">
+                            <Show when={!myChatsSidebarOpen()}>
+                                <div class="chat-main-header">
+                                    <button class="sidebar-toggle" onClick={() => setMyChatsSidebarOpen(true)} title="Показать панель">&#9776;</button>
+                                </div>
+                            </Show>
                             <Show when={props.selectedMyChatId()} fallback={
                                 <div class="empty-state" style="flex:1">
                                     <p>Выберите чат из списка слева</p>
@@ -412,27 +456,38 @@ export default function AdminPanel(props: {
                                     </div>
                                 </div>
 
-                                <div class="chat-layout" style="height: calc(100vh - 57px - 68px)">
+                                <div class={`chat-layout ${!userChatsSidebarOpen() ? "sidebar-collapsed" : ""}`} style="height: calc(100vh - 57px - 68px)">
                                     <aside class="chat-sidebar">
-                                        <For each={props.userChats()} fallback={
-                                            <div class="empty-state"><p>Нет чатов</p></div>
-                                        }>
-                                            {(c) => (
-                                                <button
-                                                    class={`sidebar-btn ${props.selectedUserChatId() === c.id ? "active" : ""}`}
-                                                    onClick={() => props.onOpenUserChat(c.id)}
-                                                >
-                                                    <strong>{c.name || "Без названия"}</strong>
-                                                    <small>
-                                                        {c.username ? `@${c.username}` : ""}
-                                                        {new Date(c.createdAt).toLocaleDateString()}
-                                                    </small>
-                                                </button>
-                                            )}
-                                        </For>
+                                        <div class="sidebar-header">
+                                            <h3>Чаты</h3>
+                                            <button class="sidebar-toggle" onClick={() => setUserChatsSidebarOpen(false)} title="Скрыть панель">&times;</button>
+                                        </div>
+                                        <div class="sidebar-list">
+                                            <For each={props.userChats()} fallback={
+                                                <div class="empty-state"><p>Нет чатов</p></div>
+                                            }>
+                                                {(c) => (
+                                                    <button
+                                                        class={`sidebar-btn ${props.selectedUserChatId() === c.id ? "active" : ""}`}
+                                                        onClick={() => { props.onOpenUserChat(c.id); if (isMobile()) setUserChatsSidebarOpen(false); }}
+                                                    >
+                                                        <strong>{c.name || "Без названия"}</strong>
+                                                        <small>
+                                                            {c.username ? `@${c.username}` : ""}
+                                                            {new Date(c.createdAt).toLocaleDateString()}
+                                                        </small>
+                                                    </button>
+                                                )}
+                                            </For>
+                                        </div>
                                     </aside>
 
                                     <div class="chat-main">
+                                        <Show when={!userChatsSidebarOpen()}>
+                                            <div class="chat-main-header">
+                                                <button class="sidebar-toggle" onClick={() => setUserChatsSidebarOpen(true)} title="Показать панель">&#9776;</button>
+                                            </div>
+                                        </Show>
                                         <Show when={props.selectedUserChatId()} fallback={
                                             <div class="empty-state" style="flex:1">
                                                 <p>Выберите чат для просмотра</p>
