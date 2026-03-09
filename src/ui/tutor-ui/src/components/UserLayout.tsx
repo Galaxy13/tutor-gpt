@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js'
+import { createSignal, For, Show } from 'solid-js'
 import type { Accessor } from "solid-js";
 import { marked } from "marked";
 import type { Chat, Message } from "../types";
@@ -24,6 +24,7 @@ export default function UserLayout(props: {
     sending: Accessor<boolean>;
 }) {
     let imageInputRef: HTMLInputElement | undefined;
+    const [sidebarOpen, setSidebarOpen] = createSignal(window.innerWidth > 768);
 
     const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -32,12 +33,20 @@ export default function UserLayout(props: {
         }
     };
 
+    const handleOpenChat = (chat: Chat) => {
+        props.onOpenChat(chat);
+        if (window.innerWidth <= 768) setSidebarOpen(false);
+    };
+
     return (
-        <div class="chat-layout">
+        <div class={`chat-layout ${!sidebarOpen() ? "sidebar-collapsed" : ""}`}>
             <aside class="chat-sidebar">
                 <div class="sidebar-header">
                     <h3>Чаты</h3>
-                    <button class="btn-sm" onClick={props.onNewChat}>+ Новый</button>
+                    <div class="row" style="gap: 4px">
+                        <button class="btn-sm" onClick={props.onNewChat}>+ Новый</button>
+                        <button class="sidebar-toggle" onClick={() => setSidebarOpen(false)} title="Скрыть панель">&times;</button>
+                    </div>
                 </div>
 
                 <div class="sidebar-list">
@@ -45,7 +54,7 @@ export default function UserLayout(props: {
                         {(chat) => (
                             <button
                                 class={`sidebar-btn ${props.activeChat()?.id === chat.id ? "active" : ""}`}
-                                onClick={() => props.onOpenChat(chat)}
+                                onClick={() => handleOpenChat(chat)}
                             >
                                 <strong>{chat.name || "Новый чат"}</strong>
                                 <small>{new Date(chat.createdAt).toLocaleString()}</small>
@@ -56,6 +65,17 @@ export default function UserLayout(props: {
             </aside>
 
             <div class="chat-main">
+                <Show when={!sidebarOpen()}>
+                    <div class="chat-main-header">
+                        <button class="sidebar-toggle" onClick={() => setSidebarOpen(true)} title="Показать панель">&#9776;</button>
+                        <Show when={props.activeChat()}>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                                {props.activeChat()!.name || "Новый чат"}
+                            </span>
+                        </Show>
+                    </div>
+                </Show>
+
                 <div class="messages">
                     <Show when={!props.messagesLoading()} fallback={
                         <div class="loading-dots">
