@@ -149,6 +149,7 @@ header .header-actions { display: flex; gap: 8px; }
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 8px; padding: 0 4px;
 }
+.chat-sidebar .sidebar-header .sidebar-toggle { display: inline-flex; }
 .chat-sidebar .sidebar-header h3 {
     color: var(--text-secondary); font-size: 0.7rem;
     text-transform: uppercase; letter-spacing: 0.06em;

@@ -13,6 +13,7 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
     const [sending, setSending] = createSignal(false);
     const [messagesLoading, setMessagesLoading] = createSignal(false);
     const [selectedImage, setSelectedImage] = createSignal<File | null>(null);
+    const [sidebarOpen, setSidebarOpen] = createSignal(window.innerWidth > 768);
 
     let imageInputRef: HTMLInputElement | undefined;
 
@@ -103,12 +104,20 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
         }
     };
 
+    const handleOpenChat = (chatId: string) => {
+        openChat(chatId);
+        if (window.innerWidth <= 768) setSidebarOpen(false);
+    };
+
     return (
-        <div class="chat-layout" style="height: 100vh;">
+        <div class={`chat-layout ${!sidebarOpen() ? 'sidebar-collapsed' : ''}`} style="height: 100vh;">
             <aside class="chat-sidebar">
                 <div class="sidebar-header">
                     <h3>{props.withPrompt ? 'С промптом' : 'Без промпта'}</h3>
-                    <button class="btn-sm" onClick={clearChat}>+ Новый</button>
+                    <div class="row" style="gap: 4px">
+                        <button class="btn-sm" onClick={clearChat}>+ Новый</button>
+                        <button class="sidebar-toggle" onClick={() => setSidebarOpen(false)} title="Скрыть панель">&times;</button>
+                    </div>
                 </div>
 
                 <div class="sidebar-list">
@@ -116,7 +125,7 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
                         {(chat) => (
                             <button
                                 class={`sidebar-btn ${selectedChatId() === chat.id ? 'active' : ''}`}
-                                onClick={() => openChat(chat.id)}
+                                onClick={() => handleOpenChat(chat.id)}
                             >
                                 <strong>{chat.name || 'Новый чат'}</strong>
                                 <small>
@@ -130,6 +139,15 @@ export default function AdminChatWindow(props: { auth: AuthResponse; withPrompt:
             </aside>
 
             <div class="chat-main">
+                <Show when={!sidebarOpen()}>
+                    <div class="chat-main-header">
+                        <button class="sidebar-toggle" onClick={() => setSidebarOpen(true)} title="Показать панель">&#9776;</button>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                            {props.withPrompt ? 'С промптом' : 'Без промпта'}
+                        </span>
+                    </div>
+                </Show>
+
                 <div class="messages">
                     <Show when={!messagesLoading()} fallback={
                         <div class="loading-dots">
